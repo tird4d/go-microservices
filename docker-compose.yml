@@ -1,0 +1,12 @@
+services:
+    mongo:
+      image: mongo:6
+      container_name: go-micro-mongo
+      restart: always
+      ports:
+        - "27017:27017"
+      volumes:
+        - mongo-data:/data/db
+
+volumes:
+  mongo-data:

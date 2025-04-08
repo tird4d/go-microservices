@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "./proto;proto";
+#option go_package = "github.com/tird4d/go-microservices/user_service/proto;proto";
+
+
+
+service UserService {
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+  rpc GetUser (GetUserRequest) returns (UserResponse);
+}
+
+message RegisterRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message RegisterResponse {
+  string id = 1;
+  string message = 2;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message UserResponse {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}
