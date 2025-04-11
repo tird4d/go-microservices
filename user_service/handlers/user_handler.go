@@ -34,3 +34,21 @@ func (s *Server) GetUser(ctx context.Context, req *userpb.GetUserRequest) (*user
 		Email: "ali@example.com",
 	}, nil
 }
+
+func (s *Server) GetUserCredential(ctx context.Context, req *userpb.GetUserCredentialRequest) (*userpb.UserCredentialResponse, error) {
+	log.Printf("📥 Received GetCredential request: %v", req)
+
+	repo := &repositories.MongoUserRepository{}
+	user, err := services.GetUserCredential(ctx, repo, req.GetEmail())
+	if err != nil {
+		log.Printf("❌ Error getting user credential: %v", err)
+		return nil, err
+	}
+	log.Printf("✅ User credential retrieved: %v", user)
+
+	return &userpb.UserCredentialResponse{
+		Id:       user.ID.Hex(),
+		Email:    user.Email,
+		Password: user.Password,
+	}, nil
+}

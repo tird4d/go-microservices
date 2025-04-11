@@ -26,3 +26,12 @@ func RegisterUser(ctx context.Context, repo repositories.UserRepository, name, e
 
 	return err
 }
+
+func GetUserCredential(ctx context.Context, repo repositories.UserRepository, email string) (*models.User, error) {
+	user, err := repo.FindUserByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}

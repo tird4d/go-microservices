@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tird4d/go-microservices/user_service/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -18,4 +19,16 @@ func (r *MongoUserRepository) InsertNewUser(user *models.User) (*mongo.InsertOne
 	defer cancel()
 
 	return result, err
+}
+
+func (r *MongoUserRepository) FindUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	user := &models.User{}
+
+	err := models.UserCollection().FindOne(ctx, bson.M{"email": email}).Decode(user)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

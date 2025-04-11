@@ -5,28 +5,14 @@ import (
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
 	"github.com/tird4d/go-microservices/auth_service/utils"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 )
 
-func LoginUser(ctx context.Context, email, password string) (string, error) {
-
-	conn, err := grpc.DialContext(ctx, "localhost:50051",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
-
-	if err != nil {
-		log.Fatalf("❌ could not connect: %v", err)
-	}
-	defer conn.Close()
-
-	userClient := userpb.NewUserServiceClient(conn)
+func LoginUser(ctx context.Context, userClient userpb.UserServiceClient, email, password string) (string, error) {
 
 	res, err := userClient.GetUserCredential(ctx, &userpb.GetUserCredentialRequest{
 		Email: email,
