@@ -97,14 +97,20 @@ func main() {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"token":   res.Token,
-			"message": res.Message,
+			"token":         res.Token,
+			"refresh_token": res.RefreshToken,
+			"message":       res.Message,
 		})
 	})
 
 	auth := router.Group("/")
 	auth.Use(middlewares.JWTAuthMiddleware(authClient))
 	auth.GET("/me", handlers.MeHandler)
+
+	handler := handlers.GatewayHandler{
+		AuthClient: authClient,
+	}
+	router.POST("/refresh-token", handler.RefreshTokenHandler)
 
 	log.Println("🚀 API Gateway is running on http://localhost:8080")
 	router.Run(":8080")

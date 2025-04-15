@@ -5,6 +5,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/tird4d/go-microservices/user_service/events"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 	"github.com/tird4d/go-microservices/user_service/repositories"
 	"github.com/tird4d/go-microservices/user_service/services"
@@ -19,6 +20,12 @@ func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*us
 
 	repo := &repositories.MongoUserRepository{}
 	services.RegisterUser(ctx, repo, req.GetName(), req.GetEmail(), req.GetPassword())
+
+	_ = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
+		UserID: "123456",
+		Email:  req.GetEmail(),
+		Name:   req.Name,
+	})
 
 	return &userpb.RegisterResponse{
 		Id:      "12345",

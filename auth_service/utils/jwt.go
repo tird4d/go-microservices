@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func GenerateJWT(userId primitive.ObjectID, role string) (string, error) {
+func GenerateJWT(userId primitive.ObjectID, email string) (string, error) {
 	_ = userId
 
 	secret := os.Getenv("JWT_SECRET")
@@ -21,7 +22,7 @@ func GenerateJWT(userId primitive.ObjectID, role string) (string, error) {
 
 	claims := jwt.MapClaims{
 		"user_id": userId.Hex(),
-		"role":    role,
+		"email":   email,
 		"auth_at": time.Now().Unix(),
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
@@ -58,4 +59,12 @@ func ValidateJWT(tokenString string) (jwt.MapClaims, error) {
 	}
 
 	return nil, errors.New("invalid token")
+}
+
+func GenerateRefreshToken() string {
+	// Generate a refresh token with a longer expiration time
+	token := uuid.NewString()
+
+	return token
+
 }
