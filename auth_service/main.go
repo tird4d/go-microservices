@@ -30,25 +30,21 @@ func main() {
 
 	// Connect to Redis
 	config.ConnectRedis()
-	if config.RedisClient == nil {
-		log.Fatal("❌ Redis client is nil")
-	}
-	log.Println("✅ Redis client connected")
 
 	// Make gRPC connection to User Service
 	// The connection is made to the User Service running on localhost:50051
-	conn, err := grpc.DialContext(ctx, "localhost:50051",
+	conn, err := grpc.DialContext(ctx, "user-service:50051",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 	)
 
 	if err != nil {
-		log.Fatalf("cannot connect to user service: %v", err)
+		log.Fatalf("cannot connect to user service  updated: %v", err)
 	}
 
-	if conn != nil {
-		defer conn.Close()
-	}
+	// if conn != nil {
+	// 	defer conn.Close()
+	// }
 
 	userClient := userpb.NewUserServiceClient(conn)
 

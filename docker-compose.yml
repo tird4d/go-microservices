@@ -1,4 +1,41 @@
 services:
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: go-micro-user-service
+    restart: always
+    ports:
+      - "50051:50051"
+    env_file:
+      ./user_service/.env
+    depends_on:
+      - mongo
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: go run main.go
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: go-micro-auth-service
+    restart: always
+    ports:
+      - "50052:50052"
+    env_file:
+      ./auth_service/.env
+    depends_on:
+      - mongo
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: go run main.go
+
+
+
     mongo:
       image: mongo:6
       container_name: go-micro-mongo
