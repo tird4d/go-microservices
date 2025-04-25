@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"os"
 
+	"github.com/joho/godotenv"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -14,7 +16,14 @@ type UserRegisteredEvent struct {
 }
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("⚠️ Error loading .env file")
+	}
+
+	rabbitMQAddr := os.Getenv("RABBITMQ_CONNECTION_STRING")
+
+	conn, err := amqp.Dial(rabbitMQAddr)
 	if err != nil {
 		log.Fatalf("❌ Failed to connect to RabbitMQ: %v", err)
 	}

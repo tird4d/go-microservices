@@ -49,6 +49,8 @@ spec:
               value: "test"
             - name: REDIS_ADDR
               value: "redis-release-master:6379"
+            - name: USER_SERVICE_ADDR
+              value: "user-service:50051"
 
           livenessProbe:
             tcpSocket:

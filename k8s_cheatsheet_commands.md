@@ -3,6 +3,9 @@
 ### 🔁 Helm
 
 ```bash
+# ساخت سرویس
+helm create <release-name>
+
 # نصب یا آپدیت سرویس
 helm upgrade --install <release-name> <chart-path>
 
@@ -14,7 +17,7 @@ helm uninstall <release-name>
 
 # بررسی render خروجی yaml نهایی
 helm template <release-name> <chart-path>
-
+helm upgrade  <release-name> <chart-path>
 # مشاهده فایل‌های rendered و diff با deployment قبلی
 helm diff upgrade <release-name> <chart-path>   # نیاز به نصب افزونه helm-diff
 
@@ -27,6 +30,10 @@ helm install redis-release bitnami/redis \
   --set architecture=standalone
 🔒 اگر خواستی Redis رو با رمز عبور نصب کنی:
   --set auth.enabled=true --set auth.password=yourPassword
+
+helm template auth-service ./charts/auth-service
+helm upgrade auth-service ./charts/auth-service
+
 
 ```
 
@@ -77,6 +84,7 @@ docker rmi <image-id>
 # فعال‌سازی محیط داکر داخلی مینی‌کیوب برای build مستقیم
 eval $(minikube docker-env)
 
+
 # بارگذاری ایمیج ساخته شده به داخل مینی‌کیوب (در صورتی که از docker-env استفاده نشود)
 minikube image load <image-name>:<tag>
 
@@ -85,6 +93,9 @@ minikube ip
 
 # باز کردن داشبورد گرافیکی
 minikube dashboard
+
+minikube ssh
+
 ```
 
 ---

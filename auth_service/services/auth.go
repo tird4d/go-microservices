@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/tird4d/go-microservices/auth_service/config"
+	"github.com/tird4d/go-microservices/auth_service/logger"
 	"github.com/tird4d/go-microservices/auth_service/utils"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 )
@@ -21,37 +22,31 @@ func LoginUser(ctx context.Context, userClient userpb.UserServiceClient, email, 
 	})
 	log.Printf("🔍 User credential response: %v", res)
 
-	if err != nil {
-		log.Printf("❌ Failed to connect to user_service: %v", err)
-		return "", "", status.Errorf(codes.Unavailable, "cannot connect to user service")
-	}
-
-	if res == nil {
-		log.Println("⚠️ userService responded with nil")
-		return "", "", status.Errorf(codes.Internal, "empty response from user service")
+	if res, err = userServiceResponseHandler(res, err); err != nil {
+		return "", "", err
 	}
 
 	ok := utils.CheckPasswordHash(password, res.Password)
 	if !ok {
-		log.Println("❌ Invalid password")
+		logger.Error("Invalid password: %v", err)
 		return "", "", status.Errorf(codes.Unauthenticated, "invalid password")
 	}
 
 	oid, err := primitive.ObjectIDFromHex(res.Id)
 	if err != nil {
-		log.Printf("❌ Invalid user ID: %v", err)
+		logger.Error("Invalid user ID: %v", err)
 		return "", "", status.Errorf(codes.InvalidArgument, "invalid user ID")
 	}
 
 	token, err := utils.GenerateJWT(oid, res.Email)
 	if err != nil {
-		log.Printf("❌ Failed to generate JWT: %v", err)
+		logger.Error("Failed to generate JWT: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to generate JWT")
 	}
 
 	refreshToken, err := createRefreshToken(ctx, res.Id)
 	if err != nil || refreshToken == "" {
-		log.Printf("❌ Failed to create refresh token: %v", err)
+		logger.Error("Failed to create refresh token: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to create refresh token")
 	}
 
@@ -138,4 +133,22 @@ func DeleteRefreshToken(ctx context.Context, refreshToken string) error {
 
 	return err
 
+}
+
+func userServiceResponseHandler(res *userpb.UserCredentialResponse, err error) (*userpb.UserCredentialResponse, error) {
+	if err != nil {
+		st, ok := status.FromError(err)
+		if ok && st.Code() == codes.NotFound {
+			return nil, status.Error(codes.Unauthenticated, "invalid email or password")
+		}
+		logger.Error("Failed to connect to user_service: %v", err)
+		return nil, status.Error(codes.Unavailable, "cannot connect to user service")
+	}
+
+	if res == nil {
+		logger.Error("userService responded with nil")
+		return nil, status.Errorf(codes.Internal, "empty response from user service")
+	}
+
+	return res, nil
 }

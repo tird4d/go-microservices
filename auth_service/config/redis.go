@@ -14,7 +14,7 @@ var Ctx = context.Background()
 
 func ConnectRedis() {
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_HOST"), // مثلاً "localhost:6379"
+		Addr:     os.Getenv("REDIS_ADDR"), // مثلاً "localhost:6379"
 		Password: "",                      // اگر ست شده
 		DB:       0,
 	})

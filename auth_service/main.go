@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -33,7 +34,7 @@ func main() {
 
 	// Make gRPC connection to User Service
 	// The connection is made to the User Service running on localhost:50051
-	conn, err := grpc.DialContext(ctx, "user-service:50051",
+	conn, err := grpc.DialContext(ctx, os.Getenv("USER_SERVICE_ADDR"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 	)

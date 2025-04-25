@@ -9,6 +9,7 @@ import (
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 	"github.com/tird4d/go-microservices/user_service/repositories"
 	"github.com/tird4d/go-microservices/user_service/services"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Server struct {
@@ -16,19 +17,29 @@ type Server struct {
 }
 
 func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*userpb.RegisterResponse, error) {
-	log.Printf("📥 Received Register request: %v", req)
+	log.Printf("📥 RReceived Register request: %v", req)
 
 	repo := &repositories.MongoUserRepository{}
-	services.RegisterUser(ctx, repo, req.GetName(), req.GetEmail(), req.GetPassword())
+	result, err := services.RegisterUser(ctx, repo, req.GetName(), req.GetEmail(), req.GetPassword())
+	if err != nil {
+		log.Printf("❌ Error registering user: %v", err)
+		return nil, err
+	}
+	log.Printf("✅ User registered successfully: %v", result)
 
-	_ = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
-		UserID: "123456",
+	err = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
+		UserID: result.InsertedID.(primitive.ObjectID).Hex(),
 		Email:  req.GetEmail(),
 		Name:   req.Name,
 	})
 
+	if err != nil {
+		log.Printf("❌ Error publishing user registered event: %v", err)
+		return nil, err
+	}
+
 	return &userpb.RegisterResponse{
-		Id:      "12345",
+		Id:      result.InsertedID.(primitive.ObjectID).Hex(),
 		Message: "User registered successfully",
 	}, nil
 }

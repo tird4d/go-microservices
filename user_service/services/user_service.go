@@ -6,13 +6,14 @@ import (
 	"github.com/tird4d/go-microservices/user_service/models"
 	"github.com/tird4d/go-microservices/user_service/repositories"
 	"github.com/tird4d/go-microservices/user_service/utils"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func RegisterUser(ctx context.Context, repo repositories.UserRepository, name, email, password string) error {
+func RegisterUser(ctx context.Context, repo repositories.UserRepository, name, email, password string) (*mongo.InsertOneResult, error) {
 
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	user := models.User{
@@ -22,9 +23,9 @@ func RegisterUser(ctx context.Context, repo repositories.UserRepository, name, e
 		Role:     "user",
 	}
 
-	_, err = repo.InsertNewUser(&user)
+	result, err := repo.InsertNewUser(&user)
 
-	return err
+	return result, err
 }
 
 func GetUserCredential(ctx context.Context, repo repositories.UserRepository, email string) (*models.User, error) {

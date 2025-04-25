@@ -53,6 +53,8 @@ spec:
             value: "go-microservice"
           - name: JWT_SECRET
             value: "test"
+          - name: RABBITMQ_CONNECTION_STRING
+            value: amqp://admin:adminpassword@rabbitmq.default.svc.cluster.local:5672/
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

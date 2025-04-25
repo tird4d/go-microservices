@@ -3,6 +3,7 @@ package events
 import (
 	"encoding/json"
 	"log"
+	"os"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -14,7 +15,7 @@ type UserRegisteredEvent struct {
 }
 
 func PublishUserRegisteredEvent(event UserRegisteredEvent) error {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial(os.Getenv("RABBITMQ_CONNECTION_STRING"))
 	if err != nil {
 		return err
 	}
