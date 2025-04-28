@@ -2,11 +2,11 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
 
+	"github.com/tird4d/go-microservices/user_service/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -23,7 +23,8 @@ func ConnectDB() *mongo.Database {
 	}
 
 	DB = client.Database(os.Getenv("MONGO_DB"))
-	fmt.Println("✅ MongoDB connected.")
+
+	logger.Log.Info("✅ MongoDB connected", "db", os.Getenv("MONGO_DB"))
 
 	return DB
 }

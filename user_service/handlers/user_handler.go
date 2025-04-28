@@ -3,9 +3,9 @@ package handlers
 
 import (
 	"context"
-	"log"
 
 	"github.com/tird4d/go-microservices/user_service/events"
+	"github.com/tird4d/go-microservices/user_service/logger"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 	"github.com/tird4d/go-microservices/user_service/repositories"
 	"github.com/tird4d/go-microservices/user_service/services"
@@ -17,15 +17,18 @@ type Server struct {
 }
 
 func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*userpb.RegisterResponse, error) {
-	log.Printf("📥 RReceived Register request: %v", req)
+
+	logger.Log.Info("Received Register request", "request", req)
 
 	repo := &repositories.MongoUserRepository{}
 	result, err := services.RegisterUser(ctx, repo, req.GetName(), req.GetEmail(), req.GetPassword())
 	if err != nil {
-		log.Printf("❌ Error registering user: %v", err)
+
+		logger.Log.Error("Error registering user", "error", err)
 		return nil, err
 	}
-	log.Printf("✅ User registered successfully: %v", result)
+
+	logger.Log.Info("User registered successfully", "user_id", result.InsertedID)
 
 	err = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
 		UserID: result.InsertedID.(primitive.ObjectID).Hex(),
@@ -34,7 +37,7 @@ func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*us
 	})
 
 	if err != nil {
-		log.Printf("❌ Error publishing user registered event: %v", err)
+		logger.Log.Error("Error publishing user registered event", "error", err)
 		return nil, err
 	}
 
@@ -45,7 +48,9 @@ func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*us
 }
 
 func (s *Server) GetUser(ctx context.Context, req *userpb.GetUserRequest) (*userpb.UserResponse, error) {
-	log.Printf("📥 Received GetUser request: %v", req)
+
+	logger.Log.Info("Received GetUser request", "request", req)
+
 	return &userpb.UserResponse{
 		Id:    req.GetId(),
 		Name:  "Ali",
@@ -54,15 +59,15 @@ func (s *Server) GetUser(ctx context.Context, req *userpb.GetUserRequest) (*user
 }
 
 func (s *Server) GetUserCredential(ctx context.Context, req *userpb.GetUserCredentialRequest) (*userpb.UserCredentialResponse, error) {
-	log.Printf("📥 Received GetCredential request: %v", req)
+	logger.Log.Info("Received GetCredential request", "request", req)
 
 	repo := &repositories.MongoUserRepository{}
 	user, err := services.GetUserCredential(ctx, repo, req.GetEmail())
 	if err != nil {
-		log.Printf("❌ Error getting user credential: %v", err)
+		logger.Log.Error("Error getting user credential", "error", err)
 		return nil, err
 	}
-	log.Printf("✅ User credential retrieved: %v", user)
+	logger.Log.Info("User credential retrieved successfully", "user", user)
 
 	return &userpb.UserCredentialResponse{
 		Id:       user.ID.Hex(),

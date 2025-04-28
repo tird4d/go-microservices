@@ -3,112 +3,148 @@
 ### 🔁 Helm
 
 ```bash
-# ساخت سرویس
+# Create a new service/chart
 helm create <release-name>
 
-# نصب یا آپدیت سرویس
+# Install or upgrade a release
 helm upgrade --install <release-name> <chart-path>
 
-# مشاهده لیست release ها
+# List all installed releases
 helm list
 
-# حذف یک release
+# Uninstall a release
 helm uninstall <release-name>
 
-# بررسی render خروجی yaml نهایی
+# Render final YAML output without applying it
 helm template <release-name> <chart-path>
-helm upgrade  <release-name> <chart-path>
-# مشاهده فایل‌های rendered و diff با deployment قبلی
-helm diff upgrade <release-name> <chart-path>   # نیاز به نصب افزونه helm-diff
 
-# نصب پکیج ردیس
+# Render and apply the upgrade
+helm upgrade <release-name> <chart-path>
+
+# Show rendered file differences before upgrade (requires helm-diff plugin)
+helm diff upgrade <release-name> <chart-path>
+
+# Add Redis chart repository and update
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
+# Install Redis without authentication
 helm install redis-release bitnami/redis \
   --set auth.enabled=false \
   --set architecture=standalone
-🔒 اگر خواستی Redis رو با رمز عبور نصب کنی:
-  --set auth.enabled=true --set auth.password=yourPassword
 
+# Install Redis with password
+# --set auth.enabled=true --set auth.password=yourPassword
+
+# Render specific chart for review
 helm template auth-service ./charts/auth-service
 helm upgrade auth-service ./charts/auth-service
-
 
 ```
 
 ### ☸️ kubectl
 
 ```bash
-# مشاهده وضعیت پادها
+# View the status of all pods
 kubectl get pods
 
-# مشاهده سرویس‌ها
+# View services in the current namespace
 kubectl get svc
 
-# مشاهده لاگ یک پاد
+# View logs of a specific pod
 kubectl logs <pod-name>
 
-# مشاهده لاگ deployment
+# View logs of a specific deployment
 kubectl logs deployment/<deployment-name>
 
-# پاک کردن یک پاد خاص (ریستارت خواهد شد)
+# Delete a specific pod (it will be restarted by the deployment)
 kubectl delete pod <pod-name>
 
-# port forward برای دسترسی محلی به پاد
+# Forward port from container to local machine
 kubectl port-forward deployment/<deployment-name> <local-port>:<container-port>
 
-# مشاهده تمام منابع در namespace جاری
+# View all Kubernetes resources in the current namespace
 kubectl get all
 
-# توصیف یک پاد برای جزئیات بیشتر
+# Describe a pod in detail (for events, probe failures, etc.)
 kubectl describe pod <pod-name>
-```
 
-### 🐳 Docker
+# Get container names in a pod
+kubectl get pod <pod-name> -o jsonpath="{.spec.containers[*].name}"
 
-```bash
-# ساخت ایمیج داکر
-docker build -t <image-name>:<tag> .
+# Execute a command inside a pod interactively
+kubectl exec -it <pod-name> -- /bin/sh
 
-# مشاهده لیست ایمیج‌ها
-docker images
+# Apply resources from a YAML file
+kubectl apply -f <file.yaml>
 
-# حذف ایمیج
-docker rmi <image-id>
+# Delete resources from a YAML file
+kubectl delete -f <file.yaml>
+
+# Get architecture of cluster nodes (for image compatibility)
+kubectl get node -o jsonpath="{.items[0].status.nodeInfo.architecture}"
+
+# View recent cluster events (useful for probe/debugging issues)
+kubectl get events --sort-by=.metadata.creationTimestamp
+
 ```
 
 ### 🟡 Minikube
 
 ```bash
-# فعال‌سازی محیط داکر داخلی مینی‌کیوب برای build مستقیم
+# Enable local Docker environment for direct image build inside Minikube
 eval $(minikube docker-env)
 
-
-# بارگذاری ایمیج ساخته شده به داخل مینی‌کیوب (در صورتی که از docker-env استفاده نشود)
+# Load an image manually into Minikube (when docker-env is not used)
 minikube image load <image-name>:<tag>
 
-# مشاهده IP مینی‌کیوب (برای سرویس نوع NodePort یا LoadBalancer)
+# List images loaded into Minikube
+minikube image list
+
+# View Minikube IP address (for NodePort / LoadBalancer)
 minikube ip
 
-# باز کردن داشبورد گرافیکی
+# Open the Kubernetes dashboard in browser
 minikube dashboard
 
+# SSH into the Minikube virtual machine
 minikube ssh
 
 ```
 
----
 
-### 🧹 دستورات مفید برای پاکسازی و رفع مشکلات
+### Docker
+```bash
+# Build a Docker image
+docker build -t <image-name>:<tag> .
+
+# List all local Docker images
+docker images
+
+# Remove an image
+docker rmi <image-id>
+
+# Run a container interactively with shell access
+docker run -it <image-name>:<tag> /bin/sh
+
+```
+
+### 🧹 Useful Cleanup & Debugging Commands
+
 
 ```bash
-# پاکسازی کامل کش helm (در موارد مشکلات patch)
+# Force uninstall a Helm release (used when patches or upgrades fail)
 helm uninstall <release-name>
 
-# حذف کامل یک پاد گیر کرده یا crash شده
+# Forcefully delete a stuck or crashing pod immediately
 kubectl delete pod <pod-name> --grace-period=0 --force
 
-# بررسی خطاهای مربوط به probe
+# Describe pod to investigate health probe errors or crash reasons
 kubectl describe pod <pod-name>
+
+# Check if grpc-health-probe is present and executable
+kubectl exec -it <pod-name> -- file /bin/grpc-health-probe
+
+# Manually test a gRPC health check inside a pod
+kubectl exec -it <pod-name> -- /bin/grpc-health-probe -addr=:50051
 ```

@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/tird4d/user-api/config"
+	"github.com/tird4d/go-microservices/user_service/config"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )

@@ -2,10 +2,10 @@ package events
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/tird4d/go-microservices/user_service/logger"
 )
 
 type UserRegisteredEvent struct {
@@ -58,7 +58,8 @@ func PublishUserRegisteredEvent(event UserRegisteredEvent) error {
 	if err != nil {
 		return err
 	}
+	// Log the event
+	logger.Log.Info("Event published:", string(body))
 
-	log.Println("📤 Event published:", string(body))
 	return nil
 }
