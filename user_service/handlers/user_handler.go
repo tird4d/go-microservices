@@ -4,8 +4,10 @@ package handlers
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tird4d/go-microservices/user_service/events"
 	"github.com/tird4d/go-microservices/user_service/logger"
+	"github.com/tird4d/go-microservices/user_service/metrics"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 	"github.com/tird4d/go-microservices/user_service/repositories"
 	"github.com/tird4d/go-microservices/user_service/services"
@@ -17,6 +19,12 @@ type Server struct {
 }
 
 func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*userpb.RegisterResponse, error) {
+
+	// Start the timer for request duration
+	timer := prometheus.NewTimer(metrics.RequestDurationHistogram.WithLabelValues("RegisterUser"))
+	defer timer.ObserveDuration()
+	// Increment the request counter for the RegisterUser endpoint
+	metrics.RequestCounter.WithLabelValues("RegisterUser").Inc()
 
 	logger.Log.Info("Received Register request", "request", req)
 

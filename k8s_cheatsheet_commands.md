@@ -33,6 +33,24 @@ helm install redis-release bitnami/redis \
   --set auth.enabled=false \
   --set architecture=standalone
 
+helm install rabbitmq bitnami/rabbitmq  --namespace rabbitmq --create-namespace  --set auth.username=admin  --set auth.password=mypassword123   --set auth.erlangCookie=secretcookie123
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus prometheus-community/prometheus
+
+
+
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm install grafana grafana/grafana
+
+
+
+helm install mongo-release bitnami/mongodb \
+  --set auth.enabled=false \
+  --set architecture=standalone
+
+
 # Install Redis with password
 # --set auth.enabled=true --set auth.password=yourPassword
 
@@ -109,6 +127,9 @@ minikube dashboard
 
 # SSH into the Minikube virtual machine
 minikube ssh
+
+minikube delete
+minikube start
 
 ```
 

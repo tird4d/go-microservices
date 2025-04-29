@@ -2,12 +2,15 @@ package main
 
 import (
 	"net"
+	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tird4d/go-microservices/user_service/config"
 	"github.com/tird4d/go-microservices/user_service/handlers"
 	"github.com/tird4d/go-microservices/user_service/logger"
+	"github.com/tird4d/go-microservices/user_service/metrics"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 	"google.golang.org/grpc"
 	health "google.golang.org/grpc/health"
@@ -30,6 +33,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	go func() {
+		metrics.InitMetrics()
+
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(":9090", nil); err != nil {
+			logger.Log.Fatal("❌ Failed to start metrics HTTP server", "error", err)
+		}
+		logger.Log.Infow("✅ Metrics server is running on port", "port", 9090)
+	}()
+
 	grpcServer := grpc.NewServer()
 
 	// ✅ Register UserService
@@ -49,4 +62,5 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Log.Fatal("❌ Failed to serve", "error", err)
 	}
+
 }
