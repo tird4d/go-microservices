@@ -139,7 +139,7 @@ func userServiceResponseHandler(res *userpb.UserCredentialResponse, err error) (
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.NotFound {
-			return nil, status.Error(codes.Unauthenticated, "invalid email or password")
+			return nil, status.Error(codes.NotFound, "email not found")
 		}
 		logger.Error("Failed to connect to user_service: %v", err)
 		return nil, status.Error(codes.Unavailable, "cannot connect to user service")

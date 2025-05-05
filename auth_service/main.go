@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/tird4d/go-microservices/auth_service/config"
 	"github.com/tird4d/go-microservices/auth_service/handlers"
+	"github.com/tird4d/go-microservices/auth_service/logger"
 	authpb "github.com/tird4d/go-microservices/auth_service/proto"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 
@@ -20,7 +21,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("⚠️ Error loading .env file")
+		logger.Info("Error loading .env file")
 	}
 
 	// Set up a timeout for the connection
