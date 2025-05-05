@@ -24,6 +24,9 @@ helm upgrade <release-name> <chart-path>
 # Show rendered file differences before upgrade (requires helm-diff plugin)
 helm diff upgrade <release-name> <chart-path>
 
+kubectl create namespace prod
+
+
 # Add Redis chart repository and update
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
@@ -50,6 +53,11 @@ helm install mongo-release bitnami/mongodb \
   --set auth.enabled=false \
   --set architecture=standalone
 
+
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install nginx-ingress ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx --create-namespace
 
 # Install Redis with password
 # --set auth.enabled=true --set auth.password=yourPassword

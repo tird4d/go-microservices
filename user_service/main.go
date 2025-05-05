@@ -18,12 +18,12 @@ import (
 )
 
 func main() {
+	logger.InitLogger(true)
+
 	err := godotenv.Load()
 	if err != nil {
 		logger.Log.Fatal("⚠️ Error loading .env file", "error", err)
 	}
-
-	logger.InitLogger(true)
 
 	config.ConnectDB()
 

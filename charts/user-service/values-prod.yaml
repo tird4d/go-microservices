@@ -1,0 +1,41 @@
+replicaCount: 2
+
+image:
+  repository: user-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 50051
+
+resources:
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+
+livenessProbe:
+  exec:
+    command:
+      - /bin/grpc-health-probe
+      - -addr=:50051
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  exec:
+    command:
+      - /bin/grpc-health-probe
+      - -addr=:50051
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+env:
+  mongoUri: "mongodb://mongo-release-mongodb.default.svc.cluster.local:27017"
+  port: "50051"
+  mongoDb: "go-microservice"
+  jwtSecret: "test"
+  rabbitmq: "amqp://admin:mypassword123@rabbitmq.rabbitmq.svc.cluster.local:5672/"

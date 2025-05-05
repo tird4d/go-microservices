@@ -51,7 +51,7 @@ func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*us
 
 	return &userpb.RegisterResponse{
 		Id:      result.InsertedID.(primitive.ObjectID).Hex(),
-		Message: "User registered successfully",
+		Message: "User registered successfully....",
 	}, nil
 }
 
