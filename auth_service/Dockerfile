@@ -1,4 +1,4 @@
-FROM golang:1.24
+FROM golang:1.24 AS builder
 
 WORKDIR /app
 
@@ -12,4 +12,12 @@ COPY . .
 
 RUN go build -mod=vendor -o main .
 
-CMD ["./main"]
+# Build static binary
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -o user-service .
+
+# Stage 2: Runtime (distroless)
+FROM gcr.io/distroless/static
+
+COPY --from=builder /app/user-service /
+
+CMD ["/user-service"]

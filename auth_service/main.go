@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/tird4d/go-microservices/auth_service/config"
 	"github.com/tird4d/go-microservices/auth_service/handlers"
+	"github.com/tird4d/go-microservices/auth_service/internal/http"
 	"github.com/tird4d/go-microservices/auth_service/logger"
 	authpb "github.com/tird4d/go-microservices/auth_service/proto"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
@@ -57,6 +58,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("❌ Failed to listen: %v", err)
 	}
+
+	// Start the health check server
+	http.StartHealthServer()
 
 	grpcServer := grpc.NewServer()
 
