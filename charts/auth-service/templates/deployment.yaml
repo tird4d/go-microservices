@@ -48,7 +48,7 @@ spec:
             - name: JWT_SECRET
               value: "test"
             - name: REDIS_ADDR
-              value: "redis-release-master:6379"
+              value: "redis-release-master.default.svc.cluster.local:6379"
             - name: USER_SERVICE_ADDR
               value: "user-service:50051"
 

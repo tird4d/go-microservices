@@ -245,3 +245,59 @@ func TestAuthServer_ValidateRefreshToken_TokenNotInRedis(t *testing.T) {
 	assert.Contains(t, st.Message(), "Invalid refresh token")
 
 }
+
+func TestAuthServer_Logout_Success(t *testing.T) {
+
+	// داده‌های تست
+	refreshToken := "valid_refresh_token"
+	ctx := context.Background()
+
+	// Set the refresh token in Redis
+	config.RedisClient.Set(ctx, refreshToken, "user_id", time.Minute)
+
+	// ساختن کلاینت
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer()), grpc.WithInsecure())
+	assert.NoError(t, err)
+	defer conn.Close()
+
+	client := authpb.NewAuthServiceClient(conn)
+
+	// ارسال درخواست
+	resp, err := client.Logout(ctx, &authpb.LogoutRequest{
+		RefreshToken: refreshToken,
+	})
+
+	// بررسی نتیجه
+	assert.NoError(t, err)
+	assert.Contains(t, "Logout successful", resp.Message)
+
+	// Check if the refresh token is deleted from Redis
+	_, err = config.RedisClient.Get(ctx, refreshToken).Result()
+	assert.Error(t, err)
+	assert.Equal(t, redis.Nil, err)
+}
+
+func TestAuthServer_Logout_TokenNotInRedis(t *testing.T) {
+
+	ctx := context.Background()
+
+	// ساختن کلاینت
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(dialer()), grpc.WithInsecure())
+	assert.NoError(t, err)
+	defer conn.Close()
+
+	client := authpb.NewAuthServiceClient(conn)
+
+	// ارسال درخواست
+	resp, err := client.Logout(ctx, &authpb.LogoutRequest{
+		RefreshToken: "valid_refresh_token",
+	})
+
+	// بررسی نتیجه
+	assert.Empty(t, resp)
+	assert.Error(t, err)
+	st, _ := status.FromError(err)
+	assert.Equal(t, codes.Unauthenticated, st.Code())
+	assert.Contains(t, st.Message(), "invalid refresh token")
+
+}

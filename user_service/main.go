@@ -22,7 +22,7 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		logger.Log.Fatal("⚠️ Error loading .env file", "error", err)
+		logger.Log.Infow("⚠️ Error loading .env file", "error", err)
 	}
 
 	config.ConnectDB()

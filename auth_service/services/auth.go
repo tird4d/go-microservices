@@ -129,7 +129,21 @@ func createRefreshToken(ctx context.Context, userID string) (string, error) {
 }
 
 func DeleteRefreshToken(ctx context.Context, refreshToken string) error {
-	_, err := config.RedisClient.Del(ctx, refreshToken).Result()
+	// Check if the refresh token is exists in Redis
+	ok, err := config.RedisClient.Exists(ctx, refreshToken).Result()
+
+	if err != nil {
+		log.Printf("❌ Failed to check if refresh token exists: %v", err)
+		return status.Errorf(codes.Internal, "failed to check if refresh token exists")
+	}
+
+	if ok == 0 {
+		log.Printf("❌ Refresh token not found in Redis")
+		return status.Errorf(codes.Unauthenticated, "invalid refresh token")
+	}
+
+	// Delete the refresh token from Redis
+	_, err = config.RedisClient.Del(ctx, refreshToken).Result()
 
 	return err
 

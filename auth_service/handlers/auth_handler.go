@@ -71,3 +71,17 @@ func (s *AuthServer) ValidateRefreshToken(ctx context.Context, req *authpb.Valid
 		RefreshToken: RefreshToken,
 	}, nil
 }
+
+func (s *AuthServer) Logout(ctx context.Context, req *authpb.LogoutRequest) (*authpb.LogoutResponse, error) {
+	log.Printf("🔐 Logout called with token: %s", req.RefreshToken)
+
+	err := services.DeleteRefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		log.Printf("❌ Logout failed: %v", err)
+		return nil, status.Error(codes.Unauthenticated, err.Error())
+	}
+
+	return &authpb.LogoutResponse{
+		Message: "Logout successful",
+	}, nil
+}

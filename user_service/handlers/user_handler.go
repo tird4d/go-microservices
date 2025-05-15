@@ -12,6 +12,8 @@ import (
 	"github.com/tird4d/go-microservices/user_service/repositories"
 	"github.com/tird4d/go-microservices/user_service/services"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Server struct {
@@ -38,6 +40,7 @@ func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*us
 
 	logger.Log.Info("User registered successfully", "user_id", result.InsertedID)
 
+	//Publish user registered event
 	err = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
 		UserID: result.InsertedID.(primitive.ObjectID).Hex(),
 		Email:  req.GetEmail(),
@@ -59,10 +62,18 @@ func (s *Server) GetUser(ctx context.Context, req *userpb.GetUserRequest) (*user
 
 	logger.Log.Info("Received GetUser request", "request", req)
 
+	repo := &repositories.MongoUserRepository{}
+	// Convert string ID to ObjectID
+
+	user, err := services.GetUserByID(ctx, repo, req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "User not found")
+	}
+
 	return &userpb.UserResponse{
-		Id:    req.GetId(),
-		Name:  "Ali",
-		Email: "ali@example.com",
+		Id:    user.ID.Hex(),
+		Name:  user.Name,
+		Email: user.Email,
 	}, nil
 }
 
@@ -71,6 +82,7 @@ func (s *Server) GetUserCredential(ctx context.Context, req *userpb.GetUserCrede
 
 	repo := &repositories.MongoUserRepository{}
 	user, err := services.GetUserCredential(ctx, repo, req.GetEmail())
+
 	if err != nil {
 		logger.Log.Error("Error getting user credential", "error", err)
 		return nil, err

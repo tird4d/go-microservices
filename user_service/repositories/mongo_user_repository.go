@@ -2,14 +2,12 @@ package repositories
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/tird4d/go-microservices/user_service/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type MongoUserRepository struct{}
@@ -27,12 +25,17 @@ func (r *MongoUserRepository) InsertNewUser(user *models.User) (*mongo.InsertOne
 func (r *MongoUserRepository) FindUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	user := &models.User{}
 
-	err := models.UserCollection().FindOne(ctx, bson.M{"email": email}).Decode(user)
+	if err := models.UserCollection().FindOne(ctx, bson.M{"email": email}).Decode(user); err != nil {
+		return nil, err
+	}
 
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, status.Errorf(codes.NotFound, "user with this email not found")
-		}
+	return user, nil
+}
+
+func (r *MongoUserRepository) FindUserByID(ctx context.Context, oid primitive.ObjectID) (*models.User, error) {
+	user := &models.User{}
+
+	if err := models.UserCollection().FindOne(ctx, bson.M{"_id": oid}).Decode(user); err != nil {
 		return nil, err
 	}
 

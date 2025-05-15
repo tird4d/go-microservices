@@ -275,3 +275,26 @@ func TestValidateRefreshToken_InvalidUserIDFormat(t *testing.T) {
 	assert.Empty(t, token)
 	assert.Empty(t, newRefreshToken)
 }
+
+func TestDeleteRefreshToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+	refreshToken := "valid_refresh_token"
+	userID := primitive.NewObjectID().Hex()
+	// Set the refresh token in Redis
+	config.RedisClient.Set(ctx, refreshToken, userID, time.Minute)
+	// Call the function
+	err := DeleteRefreshToken(ctx, refreshToken)
+	// Check the result
+	assert.NoError(t, err)
+	// Check if the refresh token is deleted from Redis
+	_, err = config.RedisClient.Get(ctx, refreshToken).Result()
+	assert.Error(t, err)
+	assert.Equal(t, redis.Nil, err)
+	// Check if the refresh token is deleted from Redis
+	_, err = config.RedisClient.Get(ctx, refreshToken).Result()
+	assert.Error(t, err)
+	assert.Equal(t, redis.Nil, err)
+}
