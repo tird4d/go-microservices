@@ -68,7 +68,7 @@ func startTestGRPCServer(t *testing.T, userClient userpb.UserServiceClient) {
 
 	go func() {
 		if err := server.Serve(lis); err != nil {
-			t.Fatalf("server exited with error: %v", err)
+			log.Fatalf("server exited with error: %v", err)
 		}
 	}()
 }

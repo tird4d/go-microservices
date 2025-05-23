@@ -40,7 +40,7 @@ func JWTAuthMiddleware(authClient authpb.AuthServiceClient) gin.HandlerFunc {
 
 		c.Set("user_id", claims.UserId)
 		c.Set("email", claims.Email)
-		// c.Set("role", claims["role"])
+		c.Set("role", claims.Role)
 		// c.Set("auth_at", claims["auth_at"])
 		c.Next()
 

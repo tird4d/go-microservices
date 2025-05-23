@@ -31,14 +31,10 @@ func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*us
 	logger.Log.Info("Received Register request", "request", req)
 
 	repo := &repositories.MongoUserRepository{}
-	result, err := services.RegisterUser(ctx, repo, req.GetName(), req.GetEmail(), req.GetPassword())
+	result, err := services.RegisterUser(ctx, repo, req.GetName(), req.GetEmail(), req.GetPassword(), req.GetRole())
 	if err != nil {
-
-		logger.Log.Error("Error registering user", "error", err)
 		return nil, err
 	}
-
-	logger.Log.Info("User registered successfully", "user_id", result.InsertedID)
 
 	//Publish user registered event
 	err = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
@@ -74,6 +70,7 @@ func (s *Server) GetUser(ctx context.Context, req *userpb.GetUserRequest) (*user
 		Id:    user.ID.Hex(),
 		Name:  user.Name,
 		Email: user.Email,
+		Role:  user.Role,
 	}, nil
 }
 
@@ -93,5 +90,6 @@ func (s *Server) GetUserCredential(ctx context.Context, req *userpb.GetUserCrede
 		Id:       user.ID.Hex(),
 		Email:    user.Email,
 		Password: user.Password,
+		Role:     user.Role,
 	}, nil
 }

@@ -9,34 +9,45 @@ import (
 	"github.com/tird4d/go-microservices/user_service/models"
 	"github.com/tird4d/go-microservices/user_service/repositories"
 	"github.com/tird4d/go-microservices/user_service/utils"
+	customErrors "github.com/tird4d/go-microservices/user_service/utils/errors"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-func RegisterUser(ctx context.Context, repo repositories.UserRepository, name, email, password string) (*mongo.InsertOneResult, error) {
+func RegisterUser(ctx context.Context, repo repositories.UserRepository, name, email, password, role string) (*mongo.InsertOneResult, error) {
 
 	// Check if the email is already registered
 	existingUser, err := repo.FindUserByEmail(ctx, email)
-	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
+	if err != nil && !customErrors.IsNotFound(err) {
 		logger.Log.Errorw("Failed to check existing email", "error", err)
-		return nil, fmt.Errorf("check existing user failed: %w", err)
+		return nil, status.Error(codes.Internal, "failed to retrieve user info")
+
 	}
 
 	if existingUser != nil {
-		return nil, errors.New("email already registered")
+		return nil, status.Error(codes.AlreadyExists, "email already registered")
 	}
 
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
 		logger.Log.Errorw("Failed to hash password", "error", err)
-		return nil, fmt.Errorf("password hashing failed: %w", err)
+		return nil, status.Error(codes.Internal, "password hashing failed")
+
+	}
+
+	// Set default role if not provided
+	if role == "" {
+		role = "user"
 	}
 
 	user := models.User{
 		Name:     name,
 		Email:    email,
 		Password: hashedPassword,
-		Role:     "user",
+		Role:     role,
 	}
 
 	result, err := repo.InsertNewUser(&user)
@@ -52,10 +63,14 @@ func RegisterUser(ctx context.Context, repo repositories.UserRepository, name, e
 func GetUserCredential(ctx context.Context, repo repositories.UserRepository, email string) (*models.User, error) {
 	user, err := repo.FindUserByEmail(ctx, email)
 	if err != nil {
-		if !errors.Is(err, mongo.ErrNoDocuments) {
-			logger.Log.Errorw("Failed to find user by email", "error", err)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, status.Error(codes.NotFound, "user not found")
+
 		}
-		return nil, err
+
+		logger.Log.Errorw("Failed to find user by email", "error", err)
+		return nil, status.Error(codes.Internal, "failed to retrieve user info")
+
 	}
 	return user, nil
 }
@@ -70,10 +85,11 @@ func GetUserByID(ctx context.Context, repo repositories.UserRepository, id strin
 
 	user, err := repo.FindUserByID(ctx, oid)
 	if err != nil {
-		if !errors.Is(err, mongo.ErrNoDocuments) {
-			logger.Log.Errorw("Failed to find user by ID", "error", err)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, status.Error(codes.NotFound, "user not found")
 		}
-		return nil, err
+		logger.Log.Errorw("Failed to find user by ID", "error", err)
+		return nil, status.Error(codes.Internal, "failed to retrieve user info")
 	}
 	return user, nil
 }

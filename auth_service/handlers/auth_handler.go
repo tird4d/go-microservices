@@ -47,14 +47,16 @@ func (s *AuthServer) Validate(ctx context.Context, req *authpb.ValidateRequest) 
 	// گرفتن اطلاعات از claims
 	userID, ok1 := claims["user_id"].(string)
 	email, ok2 := claims["email"].(string)
+	role, ok3 := claims["role"].(string)
 
-	if !ok1 || !ok2 {
+	if !ok1 || !ok2 || !ok3 {
 		return nil, status.Error(codes.Internal, "Invalid token payload")
 	}
 
 	return &authpb.ValidateResponse{
 		UserId: userID,
 		Email:  email,
+		Role:   role,
 	}, nil
 }
 

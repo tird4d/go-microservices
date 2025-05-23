@@ -16,6 +16,7 @@ message RegisterRequest {
   string name = 1;
   string email = 2;
   string password = 3;
+  string role = 4;
 }
 
 message RegisterResponse {
@@ -31,6 +32,7 @@ message UserResponse {
   string id = 1;
   string name = 2;
   string email = 3;
+  string role = 4;
 }
 
 message GetUserCredentialRequest{
@@ -41,5 +43,7 @@ message UserCredentialResponse {
   string id = 1;
   string email = 2;
   string password = 3;
-}
+  string role = 4;
 
+}
+  

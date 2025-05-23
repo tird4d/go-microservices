@@ -45,6 +45,7 @@ func main() {
 			Name     string `json:"name" binding:"required"`
 			Email    string `json:"email" binding:"required,email"`
 			Password string `json:"password" binding:"required,min=6"`
+			Role     string `json:"role" binding:"required,oneof=admin user"`
 		}
 
 		if err := c.ShouldBindJSON(&body); err != nil {
@@ -59,6 +60,7 @@ func main() {
 			Name:     body.Name,
 			Email:    body.Email,
 			Password: body.Password,
+			Role:     body.Role,
 		})
 
 		if err != nil {
@@ -110,7 +112,17 @@ func main() {
 	handler := handlers.GatewayHandler{
 		AuthClient: authClient,
 	}
+
+	adminHandler := handlers.AdminHandler{
+		UserClient: userClient,
+	}
+
 	router.POST("/refresh-token", handler.RefreshTokenHandler)
+
+	admin := router.Group("/admin")
+	admin.Use(middlewares.JWTAuthMiddleware(authClient))
+	admin.Use(middlewares.AdminMiddleware(authClient))
+	admin.GET("/users", adminHandler.UsersHandler)
 
 	log.Println("🚀 API Gateway is running on http://localhost:8080")
 	router.Run(":8080")

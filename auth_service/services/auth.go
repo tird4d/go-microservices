@@ -38,7 +38,7 @@ func LoginUser(ctx context.Context, userClient userpb.UserServiceClient, email, 
 		return "", "", status.Errorf(codes.InvalidArgument, "invalid user ID")
 	}
 
-	token, err := utils.GenerateJWT(oid, res.Email)
+	token, err := utils.GenerateJWT(oid, res.Email, res.Role)
 	if err != nil {
 		logger.Error("Failed to generate JWT: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to generate JWT")
@@ -51,8 +51,6 @@ func LoginUser(ctx context.Context, userClient userpb.UserServiceClient, email, 
 	}
 
 	// delete the old refresh token if it exists
-
-	log.Printf("✅ JWT generated: %s RefreshToken generated %s", token, refreshToken)
 	return token, refreshToken, nil
 
 }
@@ -88,7 +86,7 @@ func ValidateRefreshToken(ctx context.Context, userClient userpb.UserServiceClie
 	}
 
 	// Generate a new access token
-	token, err := utils.GenerateJWT(oid, user.Email)
+	token, err := utils.GenerateJWT(oid, user.Email, user.Role)
 	if err != nil {
 		log.Printf("❌ Failed to generate JWT: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to generate JWT")
