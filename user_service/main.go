@@ -25,7 +25,7 @@ func main() {
 		logger.Log.Infow("⚠️ Error loading .env file", "error", err)
 	}
 
-	config.ConnectDB()
+	_, err = config.ConnectDB()
 
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {

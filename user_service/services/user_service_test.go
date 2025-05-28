@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 
@@ -19,6 +20,7 @@ import (
 
 func TestMain(m *testing.M) {
 	err := godotenv.Load("../.env")
+	logger.InitLogger(true)
 
 	if err != nil {
 		logger.Log.Error("Error loading .env file")
@@ -161,5 +163,191 @@ func TestGetUserByID_UserNotFound(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.NotFound, st.Code())
+	assert.Nil(t, result)
+}
+
+func TestGetAllUsers(t *testing.T) {
+	ctx := context.Background()
+
+	mockRepo := new(mocks.UserRepositoryMock)
+	users := []*models.User{
+		{
+			ID:    primitive.NewObjectID(),
+			Name:  "test1",
+			Email: "test@test.com",
+			Role:  "user",
+		},
+		{
+			ID:    primitive.NewObjectID(),
+			Name:  "test2",
+			Email: "test2@gmail.com",
+			Role:  "admin",
+		},
+	}
+	mockRepo.On("CountUsers", mock.Anything).Return(int64(len(users)), nil)
+	mockRepo.On("FindUsers", mock.Anything, mock.Anything, mock.Anything).Return(users, nil)
+
+	page := int32(1)
+	pageSize := int32(10)
+	result, totalCount, err := GetAllUsers(ctx, mockRepo, int64(page), int64(pageSize))
+	mockRepo.AssertExpectations(t)
+	mockRepo.AssertNumberOfCalls(t, "CountUsers", 1)
+	mockRepo.AssertNumberOfCalls(t, "FindUsers", 1)
+	assert.NoError(t, err)
+	assert.Len(t, result, len(users))
+	assert.Equal(t, totalCount, int64(len(users)))
+	for i, user := range result {
+		assert.Equal(t, user.Name, users[i].Name)
+		assert.Equal(t, user.Email, users[i].Email)
+		assert.Equal(t, user.Role, users[i].Role)
+		assert.NotEmpty(t, user.ID)
+	}
+}
+
+func TestGetAllUsers_EmptyResult(t *testing.T) {
+	ctx := context.Background()
+
+	mockRepo := new(mocks.UserRepositoryMock)
+	mockRepo.On("CountUsers", mock.Anything).Return(int64(0), nil)
+	mockRepo.On("FindUsers", mock.Anything, mock.Anything, mock.Anything).Return([]*models.User{}, nil)
+
+	page := int32(1)
+	pageSize := int32(10)
+	result, totalCount, err := GetAllUsers(ctx, mockRepo, int64(page), int64(pageSize))
+	mockRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+	assert.Empty(t, result)
+	assert.Equal(t, totalCount, int64(0))
+}
+func TestGetAllUsers_Error(t *testing.T) {
+	ctx := context.Background()
+
+	mockRepo := new(mocks.UserRepositoryMock)
+	mockRepo.On("FindUsers", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("database error"))
+
+	page := int32(1)
+	pageSize := int32(10)
+	result, totalCount, err := GetAllUsers(ctx, mockRepo, int64(page), int64(pageSize))
+	mockRepo.AssertExpectations(t)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Equal(t, totalCount, int64(0))
+}
+
+func TestUpdateUser_Success(t *testing.T) {
+	//Context
+	ctx := context.Background()
+
+	mockRepo := new(mocks.UserRepositoryMock)
+	id := primitive.NewObjectID()
+	user := models.User{
+		ID:       id,
+		Name:     "test",
+		Email:    "test@test.com",
+		Password: "123456",
+		Role:     "user",
+	}
+	mockRepo.On("FindUserByEmail", mock.Anything).Return(&user, nil)
+
+	mockRepo.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(&mongo.UpdateResult{MatchedCount: 1, ModifiedCount: 1}, nil)
+	result, err := UpdateUser(ctx, mockRepo, id, map[string]any{
+		"name":  "updated",
+		"email": "updated@test.com",
+		"role":  "user",
+	})
+	mockRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, int64(1), result.MatchedCount)
+	assert.Equal(t, int64(1), result.ModifiedCount)
+}
+func TestUpdateUser_UserNotFound(t *testing.T) {
+	//Context
+	ctx := context.Background()
+
+	mockRepo := new(mocks.UserRepositoryMock)
+	id := primitive.NewObjectID()
+
+	mockRepo.On("FindUserByEmail", mock.Anything).Return(nil, nil)
+	mockRepo.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(&mongo.UpdateResult{MatchedCount: 0}, nil)
+
+	result, err := UpdateUser(ctx, mockRepo, id, map[string]any{
+		"name":  "updated",
+		"email": "updated@test.com",
+		"role":  "user",
+	})
+	mockRepo.AssertExpectations(t)
+	assert.Equal(t, int64(0), result.MatchedCount)
+	assert.NoError(t, err)
+}
+
+func TestUpdateUser_EmailAlreadyExists(t *testing.T) {
+	//Context
+	ctx := context.Background()
+
+	mockRepo := new(mocks.UserRepositoryMock)
+	oid := primitive.NewObjectID()
+	// oid and user id should not match to simulate email already exists scenario
+	user := models.User{
+		ID:    primitive.NewObjectID(),
+		Name:  "test",
+		Email: "test@test.com",
+		Role:  "user",
+	}
+	mockRepo.On("FindUserByEmail", mock.Anything).Return(&user, nil)
+
+	result, err := UpdateUser(ctx, mockRepo, oid, map[string]any{
+		"name":  "updated",
+		"email": "test@test.com",
+		"role":  "user",
+	})
+	mockRepo.AssertExpectations(t)
+	assert.Nil(t, result)
+	st, _ := status.FromError(err)
+	assert.Equal(t, codes.AlreadyExists, st.Code())
+}
+
+func TestDeleteUser_Success(t *testing.T) {
+	//Context
+	ctx := context.Background()
+
+	mockRepo := new(mocks.UserRepositoryMock)
+	id := primitive.NewObjectID()
+
+	mockRepo.On("DeleteUser", mock.Anything, mock.Anything).Return(&mongo.DeleteResult{DeletedCount: 1}, nil)
+
+	result, err := DeleteUser(ctx, mockRepo, id)
+	mockRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, int64(1), result.DeletedCount)
+}
+func TestDeleteUser_UserNotFound(t *testing.T) {
+	//Context
+	ctx := context.Background()
+
+	mockRepo := new(mocks.UserRepositoryMock)
+	id := primitive.NewObjectID()
+
+	mockRepo.On("DeleteUser", mock.Anything, mock.Anything).Return(&mongo.DeleteResult{DeletedCount: 0}, nil)
+
+	result, err := DeleteUser(ctx, mockRepo, id)
+	mockRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, int64(0), result.DeletedCount)
+}
+func TestDeleteUser_Error(t *testing.T) {
+	//Context
+	ctx := context.Background()
+
+	mockRepo := new(mocks.UserRepositoryMock)
+	id := primitive.NewObjectID()
+
+	mockRepo.On("DeleteUser", mock.Anything, mock.Anything).Return(nil, errors.New("database error"))
+
+	result, err := DeleteUser(ctx, mockRepo, id)
+	mockRepo.AssertExpectations(t)
+	assert.Error(t, err)
 	assert.Nil(t, result)
 }

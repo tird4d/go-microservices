@@ -93,3 +93,72 @@ func GetUserByID(ctx context.Context, repo repositories.UserRepository, id strin
 	}
 	return user, nil
 }
+
+func GetAllUsers(ctx context.Context, repo repositories.UserRepository, page, pageSize int64) ([]*models.User, int64, error) {
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	skip := (page - 1) * pageSize
+
+	users, err := repo.FindUsers(ctx, skip, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	totalCount, err := repo.CountUsers(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, totalCount, nil
+
+}
+
+type UpdateUserFields struct {
+	Name  *string
+	Email *string
+	Role  *string
+}
+
+func UpdateUser(ctx context.Context, repo repositories.UserRepository, oid primitive.ObjectID, updates map[string]any) (*mongo.UpdateResult, error) {
+
+	if updates["email"] != nil {
+		existingUser, err := repo.FindUserByEmail(ctx, updates["email"].(string))
+		if err != nil && !customErrors.IsNotFound(err) {
+			logger.Log.Errorw("Failed to check existing email", "error", err)
+			return nil, status.Error(codes.Internal, "failed to retrieve user info")
+		}
+
+		if existingUser != nil && existingUser.ID != oid {
+			return nil, status.Error(codes.AlreadyExists, "email already registered")
+		}
+	}
+
+	result, err := repo.UpdateUser(ctx, oid, updates)
+	if err != nil {
+
+		logger.Log.Errorw("Failed to update user", "error", err)
+		return nil, status.Error(codes.Internal, "failed to update user")
+	}
+
+	return result, nil
+}
+
+func DeleteUser(ctx context.Context, repo repositories.UserRepository, oid primitive.ObjectID) (*mongo.DeleteResult, error) {
+
+	result, err := repo.DeleteUser(ctx, oid)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		logger.Log.Errorw("Failed to delete user", "error", err)
+		return nil, status.Error(codes.Internal, "failed to delete user")
+	}
+
+	return result, nil
+}

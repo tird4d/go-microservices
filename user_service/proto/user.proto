@@ -4,12 +4,17 @@ package user;
 
 option go_package = "github.com/tird4d/go-microservices/user_service/proto;proto";
 
+import "google/protobuf/wrappers.proto";
+
 
 
 service UserService {
   rpc Register (RegisterRequest) returns (RegisterResponse);
   rpc GetUser (GetUserRequest) returns (UserResponse);
   rpc GetUserCredential(GetUserCredentialRequest) returns (UserCredentialResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  rpc GetAllUsers(GetAllUsersRequest) returns (GetAllUsersResponse);
 }
 
 message RegisterRequest {
@@ -47,3 +52,36 @@ message UserCredentialResponse {
 
 }
   
+message GetAllUsersRequest {
+  int64 page = 1;     
+  int64 page_size = 2; 
+}
+
+message GetAllUsersResponse {
+  repeated UserResponse users = 1;
+  int64 total = 2;        
+  int64 current_page = 3;
+  int64 total_pages = 4;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue email = 3;
+  google.protobuf.StringValue role = 4;
+}
+
+message UpdateUserResponse {
+  string id = 1;
+  string message = 2;
+}
+
+message DeleteUserRequest{
+  string id = 1;
+}
+
+message DeleteUserResponse{
+  string id = 1;
+  int64 deletedCount = 2;
+  string message = 3;
+}
