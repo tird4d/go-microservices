@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -40,76 +39,11 @@ func main() {
 	// ایجاد روت‌ها
 	router := gin.Default()
 
-	router.POST("/register", func(c *gin.Context) {
-		var body struct {
-			Name     string `json:"name" binding:"required"`
-			Email    string `json:"email" binding:"required,email"`
-			Password string `json:"password" binding:"required,min=6"`
-			Role     string `json:"role" binding:"required,oneof=admin user"`
-		}
+	userHandler := handlers.UserHandler{
+		UserClient: userClient,
+	}
 
-		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		res, err := userClient.Register(ctx, &userpb.RegisterRequest{
-			Name:     body.Name,
-			Email:    body.Email,
-			Password: body.Password,
-			Role:     body.Role,
-		})
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"user_id": res.Id,
-			"message": res.Message,
-		})
-	})
-
-	router.POST("/login", func(c *gin.Context) {
-		var body struct {
-			Email    string `json:"email" binding:"required,email"`
-			Password string `json:"password" binding:"required,min=6"`
-		}
-
-		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		res, err := authClient.Login(ctx, &authpb.LoginRequest{
-			Email:    body.Email,
-			Password: body.Password,
-		})
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"token":         res.Token,
-			"refresh_token": res.RefreshToken,
-			"message":       res.Message,
-		})
-	})
-
-	auth := router.Group("/")
-	auth.Use(middlewares.JWTAuthMiddleware(authClient))
-	auth.GET("/me", handlers.MeHandler)
-
-	handler := handlers.GatewayHandler{
+	authHandler := handlers.GatewayHandler{
 		AuthClient: authClient,
 	}
 
@@ -117,12 +51,20 @@ func main() {
 		UserClient: userClient,
 	}
 
-	router.POST("/refresh-token", handler.RefreshTokenHandler)
+	router.POST("/api/v1/register", userHandler.RegisterHandler)
+	router.POST("/api/v1/refresh-token", authHandler.RefreshTokenHandler)
+	router.POST("/api/v1/login", authHandler.LoginHandler)
 
-	admin := router.Group("/admin")
+	auth := router.Group("/api/v1/")
+	auth.Use(middlewares.JWTAuthMiddleware(authClient))
+	auth.GET("/me", userHandler.MeHandler)
+	auth.POST("/logout", authHandler.LogoutHandler)
+
+	admin := router.Group("/api/v1/admin")
 	admin.Use(middlewares.JWTAuthMiddleware(authClient))
 	admin.Use(middlewares.AdminMiddleware(authClient))
 	admin.GET("/users", adminHandler.UsersHandler)
+	admin.PUT("/users/{id}", adminHandler.UpdateUserHandler)
 
 	log.Println("🚀 API Gateway is running on http://localhost:8080")
 	router.Run(":8080")

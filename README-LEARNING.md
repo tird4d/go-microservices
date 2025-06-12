@@ -44,18 +44,24 @@ Goal: Token-based access control
 
 ✅ Delete old refresh tokens and generate new ones on refresh
 
-⬜ Role-based access control (admin, user) (coming next)
+✅ Role-based access control (admin, user)
 
 ⬜ Phase 4: Testing & Monitoring
 Goal: Build trust with automated checks and observability
 
-⬜ Unit tests with testify/mock
+✅ Unit tests with testify/mock
 
-⬜ Structured logging (e.g. with zap)
+✅ Structured logging (e.g. with zap)
 
-⬜ Add health check endpoints (e.g. /healthz)
+✅ Add health check endpoints (e.g. /healthz)
 
-⬜ Prepare for Prometheus + Grafana integration (in K8s)
+✅ Prepare for Prometheus + Grafana integration (in K8s)
+
+⬜ Integration tests with Postman or Newman
+
+⬜ Load Testing with k6 or ghz
+
+⬜ CI/CD pipeline setup with GitHub Actions
 
 ✅ Phase 5: Dockerization
 Goal: Run the system in isolated containers

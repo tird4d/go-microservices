@@ -79,8 +79,11 @@ func (s *AuthServer) Logout(ctx context.Context, req *authpb.LogoutRequest) (*au
 
 	err := services.DeleteRefreshToken(ctx, req.RefreshToken)
 	if err != nil {
+		if status.Code(err) == codes.Unauthenticated {
+			return nil, status.Error(codes.Unauthenticated, "Invalid or expired refresh token")
+		}
 		log.Printf("❌ Logout failed: %v", err)
-		return nil, status.Error(codes.Unauthenticated, err.Error())
+		return nil, status.Error(codes.Internal, "Failed to logout")
 	}
 
 	return &authpb.LogoutResponse{
