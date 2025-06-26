@@ -8,6 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -41,6 +43,10 @@ func (a *AdminHandler) UsersHandler(c *gin.Context) {
 }
 
 func (a *AdminHandler) UpdateUserHandler(c *gin.Context) {
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
 	userId := c.Param("user_id")
 	var body struct {
 		Name  string `json:"name" binding:"required"`
@@ -53,17 +59,20 @@ func (a *AdminHandler) UpdateUserHandler(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	updateRequest := userpb.UpdateUserRequest{Id: userId}
 
-	updateRequest := userpb.UpdateUserRequest{
-		Id:    userId,
-		Name:  &wrapperspb.StringValue{Value: body.Name},
-		Email: &wrapperspb.StringValue{Value: body.Email},
-		Role:  &wrapperspb.StringValue{Value: body.Role},
+	if _, ok := c.GetPostForm("name"); ok {
+		updateRequest.Name = &wrapperspb.StringValue{Value: body.Name}
 	}
+	if _, ok := c.GetPostForm("email"); ok {
+		updateRequest.Email = &wrapperspb.StringValue{Value: body.Email}
+	}
+	if _, ok := c.GetPostForm("role"); ok {
+		updateRequest.Role = &wrapperspb.StringValue{Value: body.Role}
+	}
+
 	updateRequest.Id = userId
-	res, err := a.UserClient.UpdateUser(ctx, &updateRequest)
+	_, err := a.UserClient.UpdateUser(ctx, &updateRequest)
 
 	if err != nil {
 		log.Printf("Error updating user: %v", err)
@@ -72,7 +81,30 @@ func (a *AdminHandler) UpdateUserHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user":    res.Id,
 		"message": "User updated successfully",
+		"status":  "success",
+	})
+}
+
+func (a *AdminHandler) DeleteHandler(c *gin.Context) {
+	userId := c.Param("user_id")
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	res, err := a.UserClient.DeleteUser(ctx, &userpb.DeleteUserRequest{Id: userId})
+
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": res.Message,
+		"status":  "success",
 	})
 }

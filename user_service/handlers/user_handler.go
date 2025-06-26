@@ -194,7 +194,9 @@ func (s *Server) DeleteUser(ctx context.Context, req *userpb.DeleteUserRequest) 
 
 	result, err := services.DeleteUser(ctx, repo, oid)
 	if err != nil {
-		logger.Log.Error("Failed to delete user", "error", err)
+		if status.Code(err) == codes.NotFound {
+			return nil, status.Errorf(codes.NotFound, "User not found")
+		}
 		return nil, status.Errorf(codes.Internal, "Failed to delete user")
 	}
 

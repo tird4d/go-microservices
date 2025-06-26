@@ -1,4 +1,4 @@
-# Default values for auth-service.
+# Default values for api-gateway.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -7,7 +7,7 @@ replicaCount: 1
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: auth-service 
+  repository: api-gateway
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
@@ -54,7 +54,7 @@ service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 50052
+  port: 8080
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
@@ -89,17 +89,11 @@ resources: {}
 livenessProbe:
   httpGet:
     path: /healthz
-    port: 8081
-  initialDelaySeconds: 5
-  periodSeconds: 10
-  failureThreshold: 3
+    port: 8080
 readinessProbe:
   httpGet:
     path: /healthz
-    port: 8081
-  initialDelaySeconds: 5
-  periodSeconds: 10
-  failureThreshold: 3
+    port: 8080
 
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
@@ -127,10 +121,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-env:
-  mongoUri: "mongodb://mongo-release-mongodb.default.svc.cluster.local:27017"
-  port: "50051"
-  mongoDb: "go-microservice"
-  jwtSecret: "test"
-  rabbitmq: "amqp://admin:mypassword123@rabbitmq.rabbitmq.svc.cluster.local:5672/"

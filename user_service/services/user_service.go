@@ -150,14 +150,25 @@ func UpdateUser(ctx context.Context, repo repositories.UserRepository, oid primi
 }
 
 func DeleteUser(ctx context.Context, repo repositories.UserRepository, oid primitive.ObjectID) (*mongo.DeleteResult, error) {
+	_, err := repo.FindUserByID(ctx, oid)
 
-	result, err := repo.DeleteUser(ctx, oid)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
+		logger.Log.Errorw("Failed to find user by ID", "error", err)
+		return nil, err
+	}
+
+	result, err := repo.DeleteUser(ctx, oid)
+	if err != nil {
 		logger.Log.Errorw("Failed to delete user", "error", err)
 		return nil, status.Error(codes.Internal, "failed to delete user")
+	}
+
+	if result.DeletedCount == 0 {
+		logger.Log.Errorw("No user deleted", "user_id", oid.Hex())
+		return nil, status.Error(codes.Internal, "no user deleted")
 	}
 
 	return result, nil

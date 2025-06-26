@@ -298,6 +298,5 @@ func TestAuthServer_Logout_TokenNotInRedis(t *testing.T) {
 	assert.Error(t, err)
 	st, _ := status.FromError(err)
 	assert.Equal(t, codes.Unauthenticated, st.Code())
-	assert.Contains(t, st.Message(), "invalid refresh token")
-
+	assert.Contains(t, st.Message(), "Invalid or expired refresh token")
 }

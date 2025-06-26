@@ -4,6 +4,7 @@ go 1.24.2
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/golang/mock v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.22.0
 	github.com/rabbitmq/amqp091-go v1.10.0
