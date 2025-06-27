@@ -15,9 +15,8 @@ type UserHandler struct {
 }
 
 func (u *UserHandler) MeHandler(c *gin.Context) {
-
-	// ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
-	// defer cancel()
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
 
 	userIDRaw, exists := c.Get("user_id")
 	userID, ok := userIDRaw.(string)
@@ -28,18 +27,25 @@ func (u *UserHandler) MeHandler(c *gin.Context) {
 		return
 	}
 
-	email, exists := c.Get("email")
+	// Fetch complete user data from user service
+	userRes, err := u.UserClient.GetUser(ctx, &userpb.GetUserRequest{
+		Id: userID,
+	})
 
-	if !exists || !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User not found"})
-		c.Abort()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user data", "details": err.Error()})
 		return
 	}
 
+	// Return user data in the format expected by frontend
 	c.JSON(http.StatusOK, gin.H{
-		"email":   email,
-		"user_id": userID,
-		"message": "this is user profile",
+		"id":         userRes.Id,
+		"email":      userRes.Email,
+		"username":   userRes.Name,     // Map backend 'name' to frontend 'username'
+		"name":       userRes.Name,     // Also provide 'name' field
+		"role":       userRes.Role,
+		"created_at": time.Now().Format(time.RFC3339), // Placeholder
+		"updated_at": time.Now().Format(time.RFC3339), // Placeholder
 	})
 }
 
