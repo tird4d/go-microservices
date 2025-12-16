@@ -38,17 +38,14 @@ spec:
             - name: grpc
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ include "user-service.fullname" . }}-secrets
           env:
-            - name: MONGO_URI
-              value: {{ .Values.env.mongoUri | quote }}
             - name: PORT
               value: {{ .Values.env.port | quote }}
             - name: MONGO_DB
               value: {{ .Values.env.mongoDb | quote }}
-            - name: JWT_SECRET
-              value: {{ .Values.env.jwtSecret | quote }}
-            - name: RABBITMQ_CONNECTION_STRING
-              value: {{ .Values.env.rabbitmq | quote }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

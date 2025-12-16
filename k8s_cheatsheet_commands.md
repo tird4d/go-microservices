@@ -120,6 +120,8 @@ kubectl get events --sort-by=.metadata.creationTimestamp
 ```bash
 # Enable local Docker environment for direct image build inside Minikube
 eval $(minikube docker-env)
+# Reverse back to the docker
+eval $(minikube docker-env -u)
 
 # Load an image manually into Minikube (when docker-env is not used)
 minikube image load <image-name>:<tag>

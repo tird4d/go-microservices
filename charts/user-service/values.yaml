@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: user-service
+  repository: 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service
   pullPolicy: IfNotPresent
   tag: "latest"
 
@@ -69,8 +69,5 @@ tolerations: []
 affinity: {}
 
 env:
-  mongoUri: "mongodb://mongo-release-mongodb:27017"
   port: "50051"
-  mongoDb: "go-microservice"
-  jwtSecret: "test"
-  rabbitmq: "amqp://admin:mypassword123@rabbitmq.rabbitmq.svc.cluster.local:5672/"
+  mongoDb: "gomicrodb"

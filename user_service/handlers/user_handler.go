@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tird4d/go-microservices/user_service/events"
 	"github.com/tird4d/go-microservices/user_service/logger"
 	"github.com/tird4d/go-microservices/user_service/metrics"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
@@ -40,16 +39,16 @@ func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*us
 	}
 
 	//Publish user registered event
-	err = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
-		UserID: result.InsertedID.(primitive.ObjectID).Hex(),
-		Email:  req.GetEmail(),
-		Name:   req.Name,
-	})
+	// err = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
+	// 	UserID: result.InsertedID.(primitive.ObjectID).Hex(),
+	// 	Email:  req.GetEmail(),
+	// 	Name:   req.Name,
+	// })
 
-	if err != nil {
-		logger.Log.Error("Error publishing user registered event", "error", err)
-		return nil, err
-	}
+	// if err != nil {
+	// 	logger.Log.Error("Error publishing user registered event", "error", err)
+	// 	return nil, err
+	// }
 
 	return &userpb.RegisterResponse{
 		Id:      result.InsertedID.(primitive.ObjectID).Hex(),

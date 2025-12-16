@@ -13,11 +13,11 @@ COPY . .
 RUN go build -mod=vendor -o main .
 
 # Build static binary
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -o user-service .
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -o auth_service .
 
 # Stage 2: Runtime (distroless)
 FROM gcr.io/distroless/static
 
-COPY --from=builder /app/user-service /
+COPY --from=builder /app/auth_service /
 
-CMD ["/user-service"]
+CMD ["/auth_service"]
