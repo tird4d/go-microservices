@@ -150,7 +150,9 @@ resources:
 ## 7. Deploy Service to EKS
 
 ```bash
-helm upgrade --install user-service ./charts/user-service -n default -f ./charts/user-service/values.yaml -f ./secrets/user-service.values.local.yaml```
+helm upgrade --install user-service ./charts/user-service -n default -f ./charts/user-service/values.yaml -f ./secrets/user-service.values.local.yaml
+
+```
 
 Verify:
 
