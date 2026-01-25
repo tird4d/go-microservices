@@ -44,6 +44,9 @@ spec:
             - name: grpc
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ include "auth-service.fullname" . }}-secrets
           env:
             - name: JWT_SECRET
               value: "test"
