@@ -46,7 +46,7 @@ aws configure set region eu-central-1
 
 ---
 
-## 3. Create EKS Cluster (CLI – Recommended)
+## 3. Create EKS Cluster 
 
 ```bash
 eksctl create cluster \
@@ -57,6 +57,21 @@ eksctl create cluster \
   --managed
 ```
 
+
+
+# 3.1 EKS Cluster with yaml
+
+This cluster is created using `eksctl` on top of an existing VPC
+provisioned via Terraform (`infra/vpc`).
+
+```bash
+#create
+eksctl create cluster -f cluster.yaml
+
+#Delete
+eksctl delete cluster -f cluster.yaml
+
+```
 What this does:
 
 * Creates EKS control plane

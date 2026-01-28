@@ -22,7 +22,7 @@ vpc:
 
 managedNodeGroups:
   - name: ng-1
-    instanceType: t3.small
+    instanceType: t2.nano
     desiredCapacity: 2
     minSize: 1
     maxSize: 3
