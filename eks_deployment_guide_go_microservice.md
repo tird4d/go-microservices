@@ -83,6 +83,7 @@ What this does:
 
 ## 4. Configure kubeconfig for EKS
 
+Add context form aws
 ```bash
 aws eks update-kubeconfig \
   --region eu-central-1 \
@@ -106,6 +107,15 @@ Switch back to minikube context anytime with the command above. List all availab
 kubectl config get-contexts
 ```
 
+Delete old contexts 
+```bash
+kubectl config delete-context arn:aws:eks:...:old-cluster
+```
+
+All the config about the contexts are here
+```bash
+~/.kube/config
+```
 Verify connection:
 
 ```bash

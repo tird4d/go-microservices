@@ -42,9 +42,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: USER_SERVICE_ADDR
-              value: "user-service:50051"
+              value: {{ .Values.env.userServiceAddr | quote }}
             - name: AUTH_SERVICE_ADDR
-              value: "auth-service:50052"
+              value: {{ .Values.env.authServiceAddr | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

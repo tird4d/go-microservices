@@ -10,6 +10,14 @@ output "private_subnet_ids" {
   value = module.vpc.private_subnets
 }
 
-output "azs" {
-  value = module.vpc.azs
+output "redis_endpoint" {
+  value = aws_elasticache_serverless_cache.redis.endpoint[0].address
+}
+
+output "redis_port" {
+  value = aws_elasticache_serverless_cache.redis.endpoint[0].port
+}
+
+output "redis_sg_id" {
+  value = aws_security_group.redis.id
 }
