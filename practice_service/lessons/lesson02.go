@@ -1,8 +1,8 @@
-package main
+package lessons
 
 import "fmt"
 
-func main() {
+func Lesson02() {
 	// Lesson 2: Control Flow
 
 	// If-Else Example
