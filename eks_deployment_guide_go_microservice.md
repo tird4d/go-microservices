@@ -118,6 +118,89 @@ For simplicity and focus on Kubernetes:
 
 ---
 
+## 5.5 AWS ECR Authentication (Image Pull Access)
+
+Since your Docker image is stored in **AWS ECR**, Kubernetes needs credentials to pull it. Follow these steps:
+
+### Step 1: Authenticate Docker with ECR (local machine)
+
+```bash
+aws ecr get-login-password --region eu-central-1 | docker login \
+  --username AWS \
+  --password-stdin 114851843413.dkr.ecr.eu-central-1.amazonaws.com
+```
+
+**What this does:** Gets a temporary token from AWS and authenticates your local Docker daemon with ECR.
+
+✔ Should output: `Login Succeeded`
+
+### Step 2: Create Kubernetes Secret for ECR (in EKS cluster)
+
+```bash
+kubectl create secret docker-registry ecr-secret \
+  --docker-server=114851843413.dkr.ecr.eu-central-1.amazonaws.com \
+  --docker-username=AWS \
+  --docker-password=$(aws ecr get-login-password --region eu-central-1) \
+  -n default
+```
+
+**What this does:** Creates a Kubernetes Secret named `ecr-secret` that stores ECR credentials. Kubernetes uses this to authenticate when pulling images.
+
+⚠️ **Note:** The ECR password token expires after 12 hours. You may need to recreate this secret periodically, or use **IRSA (IAM Roles for Service Accounts)** for production.
+
+### Step 3: Add imagePullSecrets to your Helm values
+
+In `charts/user-service/values.yaml`:
+
+```yaml
+image:
+  repository: 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets:
+  - name: ecr-secret
+```
+
+**What this does:** Tells Kubernetes to use the `ecr-secret` Secret when pulling the image.
+
+### Step 4: Verify the credentials work
+
+Deploy with Helm and check if the image is pulled successfully:
+
+```bash
+helm upgrade --install user-service ./charts/user-service \
+  -f charts/user-service/values.yaml \
+  -n default
+
+# Check pod status
+kubectl get pods -n default
+kubectl describe pod <pod-name> -n default
+```
+
+✔ Pod should reach `Running` state (not `ImagePullBackOff`)
+
+### Troubleshooting: ImagePullBackOff Error
+
+If pods are stuck in `ImagePullBackOff`:
+
+```bash
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>  # May be empty if image failed to pull
+
+# Check if the image exists in ECR
+aws ecr describe-images --repository-name go-microservice/user-service --region eu-central-1
+```
+
+Common causes:
+
+* ECR credentials expired → Recreate the secret
+* Wrong ECR URI in values.yaml
+* Image not pushed to ECR yet
+* Wrong AWS account/region
+
+---
+
 ## 6. Helm Values (Initial Setup)
 
 Example key settings:

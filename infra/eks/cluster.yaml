@@ -7,18 +7,18 @@ metadata:
   version: "1.29"
 
 vpc:
-  id: "vpc-0d460fd597cbcc31b"
+  id: "vpc-007fc2aaee9a2c166"
   subnets:
     private:
       eu-central-1a:
-        id: "subnet-045331dae73e5d89f"
+        id: "subnet-0446663bbb0f5a869"
       eu-central-1b:
-        id: "subnet-0283c16696ef5348d"
+        id: "subnet-0ee0e5b128ca6f75d"
     public:
       eu-central-1a:
-        id: "subnet-0cdd46c881baf61af"
+        id: "subnet-0ef19b6bd6bbc153e"
       eu-central-1b:
-        id: "subnet-025925243c4b0b3d5"
+        id: "subnet-02c2c3e6abc51c88f"
 
 managedNodeGroups:
   - name: ng-1

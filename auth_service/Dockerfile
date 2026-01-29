@@ -5,8 +5,10 @@ WORKDIR /app
 COPY go.mod ./
 # RUN go mod download
 
-COPY go.mod ./
-COPY go.sum ./
+# Copy dependencies and source
+COPY go.mod go.sum ./
+# RUN go mod download
+RUN go mod vendor
 COPY vendor/ ./vendor/
 COPY . .
 
