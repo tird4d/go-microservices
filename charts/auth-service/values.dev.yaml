@@ -130,4 +130,4 @@ affinity: {}
 
 env:
   mongoUri: "mongodb://mongo-release-mongodb.default.svc.cluster.local:27017"
-  jwtSecret: "secret"
+  port: "50052"

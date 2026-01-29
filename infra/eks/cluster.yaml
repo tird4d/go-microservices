@@ -22,8 +22,8 @@ vpc:
 
 managedNodeGroups:
   - name: ng-1
-    instanceType: t2.nano
-    desiredCapacity: 2
+    instanceType: t3.small
+    desiredCapacity: 1
     minSize: 1
-    maxSize: 3
+    maxSize: 2
     privateNetworking: true

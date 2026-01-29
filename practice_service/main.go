@@ -1,33 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"practice_service/leetcode"
+)
 
 func main() {
-	// Hello World - First program
-	fmt.Println("Welcome to Go Practice! 🎉")
+	// fmt.Println("Hello World")
 
-	// ===================================
-	// Lesson 1: Variables
-	// ===================================
-
-	// Method 1: Full declaration with var
-	var name string = "Ali"
-
-	// Method 2: Short declaration with :=
-	age := 25
-
-	// Method 3: Declaration without initial value (zero value)
-	var score int // default value: 0
-
-	fmt.Println("Name:", name)
-	fmt.Println("Age:", age)
-	fmt.Println("Score:", score)
-
-	// ===================================
-	// Exercise 1: Try it yourself!
-	// ===================================
-	// TODO: Define a variable of type float64 called price
-	// TODO: Define a variable of type bool called isActive
-	// TODO: Print their values
-
+	// lessons.Lesson01()
+	// lessons.Lesson02()
+	leetcode.IsPowerOfTwo(-16)
 }
