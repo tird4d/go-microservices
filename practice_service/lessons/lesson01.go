@@ -2,13 +2,13 @@ package lessons
 
 import "fmt"
 
-func Lesson01() {
+func Lesson01() string {
 	var hello string = "Hello"
 	world := "World"
 	fmt.Println(hello + " " + world)
 
 	//Define Array
 
-	var friends Array[string] = ['']
+	return "Lesson 01 Completed"
 
 }
