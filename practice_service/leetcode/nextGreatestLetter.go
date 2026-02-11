@@ -2,8 +2,8 @@ package leetcode
 
 func NextGreatestLetter(letters []byte, target byte) byte {
 	//
-	//target 	//k
-	// l				   m 	l					h
+	//target 	//d
+	// l				   m 						h
 	//'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 	//'c', 'd', 'd', 'e', 'e', 'g', 'h', 'j', 'k', 'l'
 
