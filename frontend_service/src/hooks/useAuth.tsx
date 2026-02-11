@@ -38,19 +38,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true);
       const response = await authService.login({ email, password });
       
       localStorage.setItem('token', response.token);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      localStorage.setItem('refreshToken', response.refresh_token);
       
       setToken(response.token);
-      setUser(response.user);
+      
+      // Fetch user data after successful login
+      const userData = await authService.getMe();
+      setUser(userData);
+      
+      return { success: true };
     } catch (error) {
       const apiError = handleApiError(error);
-      throw new Error(apiError.message);
+      return { success: false, error: apiError.message };
     } finally {
       setIsLoading(false);
     }
@@ -62,10 +67,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.register({ email, username, password });
       
       localStorage.setItem('token', response.token);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      localStorage.setItem('refreshToken', response.refresh_token);
       
       setToken(response.token);
-      setUser(response.user);
+      
+      // Fetch user data after successful registration
+      const userData = await authService.getMe();
+      setUser(userData);
     } catch (error) {
       const apiError = handleApiError(error);
       throw new Error(apiError.message);
@@ -88,25 +96,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const refreshToken = async (): Promise<void> => {
+  const refreshToken = async (): Promise<boolean> => {
     const storedRefreshToken = localStorage.getItem('refreshToken');
     if (!storedRefreshToken) {
-      throw new Error('No refresh token available');
+      return false;
     }
 
     try {
       const response = await authService.refreshToken(storedRefreshToken);
       localStorage.setItem('token', response.token);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      localStorage.setItem('refreshToken', response.refresh_token);
       setToken(response.token);
-      setUser(response.user);
+      
+      // Fetch user data after successful token refresh
+      const userData = await authService.getMe();
+      setUser(userData);
+      
+      return true;
     } catch (error) {
       // Refresh failed, clear everything
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       setToken(null);
       setUser(null);
-      throw error;
+      return false;
+    }
+  };
+
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      setUser({ ...user, ...userData });
     }
   };
 
@@ -119,6 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     refreshToken,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

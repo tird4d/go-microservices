@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { userService, handleApiError } from '../services/api';
-import { User } from '../types';
 
 const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -38,10 +37,10 @@ const Profile: React.FC = () => {
     setSuccess('');
     
     try {
-      const [first_name, last_name] = formData.name.split(' '); // Split name into first_name and last_name
-      const updatedUser = await userService.updateProfile({ ...formData, first_name, last_name });
+      const updatedUser = await userService.updateProfile(formData);
       updateUser(updatedUser);
       setSuccess('Profile updated successfully!');
+      setIsEditing(false);
     } catch (err) {
       const apiError = handleApiError(err);
       setError(apiError.message);

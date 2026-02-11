@@ -1,5 +1,31 @@
 services:
 
+  frontend-service:
+    build:
+      context: ./frontend_service
+      dockerfile: Dockerfile
+      target: development
+    container_name: go-micro-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+
+  api-gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    container_name: go-micro-api-gateway
+    restart: always
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./api_gateway/.env
+    depends_on:
+      - user-service
+      - auth-service
+
   user-service:
     build:
       context: ./user_service
@@ -8,6 +34,8 @@ services:
     restart: always
     ports:
       - "50051:50051"
+    volumes:
+      - ./user_service:/app
     env_file:
       - ./user_service/.env
     depends_on:
