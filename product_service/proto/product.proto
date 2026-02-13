@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package product;
+
+option go_package = "github.com/tird4d/go-microservices/product_service/proto;proto";
+
+import "google/protobuf/timestamp.proto";
+
+// ProductService provides CRUD operations for products
+service ProductService {
+  rpc CreateProduct (CreateProductRequest) returns (Product);
+  rpc GetProduct (GetProductRequest) returns (Product);
+  rpc UpdateProduct (UpdateProductRequest) returns (Product);
+  rpc DeleteProduct (DeleteProductRequest) returns (DeleteProductResponse);
+  rpc ListProducts (ListProductsRequest) returns (ListProductsResponse);
+  rpc GetProductsByCategory (GetProductsByCategoryRequest) returns (ListProductsResponse);
+}
+
+// Product represents a product entity
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  string category = 5;
+  int32 stock = 6;
+  string image_url = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// CreateProductRequest for creating a new product
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  double price = 3;
+  string category = 4;
+  int32 stock = 5;
+  string image_url = 6;
+}
+
+// GetProductRequest for retrieving a product by ID
+message GetProductRequest {
+  string id = 1;
+}
+
+// UpdateProductRequest for updating an existing product
+message UpdateProductRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  string category = 5;
+  int32 stock = 6;
+  string image_url = 7;
+}
+
+// DeleteProductRequest for deleting a product
+message DeleteProductRequest {
+  string id = 1;
+}
+
+// DeleteProductResponse confirmation message
+message DeleteProductResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ListProductsRequest for listing products with pagination
+message ListProductsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+// ListProductsResponse contains list of products and pagination info
+message ListProductsResponse {
+  repeated Product products = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+// GetProductsByCategoryRequest for filtering products by category
+message GetProductsByCategoryRequest {
+  string category = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
