@@ -81,6 +81,8 @@ func main() {
 	admin.PUT("/users/:user_id", adminHandler.UpdateUserHandler)
 	admin.DELETE("/users/:user_id", adminHandler.DeleteHandler)
 
+	admin.POST("/product")
+
 	log.Println("🚀 API Gateway is running on http://localhost:8080")
 	router.Run(":8080")
 }
