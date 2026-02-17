@@ -11,7 +11,9 @@ import (
 	"github.com/tird4d/go-microservices/api_gateway/handlers"
 	"github.com/tird4d/go-microservices/api_gateway/middlewares"
 	authpb "github.com/tird4d/go-microservices/auth_service/proto"
+	productpb "github.com/tird4d/go-microservices/product_service/proto"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -43,6 +45,15 @@ func main() {
 
 	authClient := authpb.NewAuthServiceClient(authConn)
 
+
+	productConn, err := grpc.DialContext(ctx, os.Getenv("PRODUCT_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("❌ could not connect to auth gRPC server: %v", err)
+	}
+
+		productClient := productpb.NewProductServiceClient(productConn)
+
+
 	// ایجاد روت‌ها
 	router := gin.Default()
 
@@ -57,6 +68,12 @@ func main() {
 	adminHandler := handlers.AdminHandler{
 		UserClient: userClient,
 	}
+
+	adminProductHandler := handlers.ProductHandler{
+		ProductClient: productClient,
+	}
+
+
 
 	router.GET("/healthz", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -81,7 +98,13 @@ func main() {
 	admin.PUT("/users/:user_id", adminHandler.UpdateUserHandler)
 	admin.DELETE("/users/:user_id", adminHandler.DeleteHandler)
 
-	admin.POST("/product")
+	// Product routes (admin only)
+	admin.POST("/products", adminProductHandler.CreateHandler)
+	admin.GET("/products", adminProductHandler.ListProductsHandler)
+	admin.GET("/products/:id", adminProductHandler.GetProductHandler)
+	admin.PUT("/products/:id", adminProductHandler.UpdateProductHandler)
+	admin.DELETE("/products/:id", adminProductHandler.DeleteProductHandler)
+	admin.GET("/products/category/:category", adminProductHandler.GetProductsByCategoryHandler)
 
 	log.Println("🚀 API Gateway is running on http://localhost:8080")
 	router.Run(":8080")

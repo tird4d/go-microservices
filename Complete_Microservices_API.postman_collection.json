@@ -1,0 +1,822 @@
+{
+	"info": {
+		"name": "Go Microservices - Complete API",
+		"description": "Complete API collection for all microservices: Auth, Users, Products, Admin",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"version": "1.0.0"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"user_id\", jsonData.user_id);",
+									"    console.log(\"User registered with ID:\", jsonData.user_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"User123!\",\n  \"name\": \"John Doe\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "register"]
+						},
+						"description": "Register a new user with role 'user' or 'admin'"
+					},
+					"response": []
+				},
+				{
+					"name": "Register Admin User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"admin_id\", jsonData.user_id);",
+									"    console.log(\"Admin registered with ID:\", jsonData.user_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\",\n  \"name\": \"Admin User\",\n  \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "register"]
+						},
+						"description": "Register an admin user for accessing admin endpoints"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.environment.set(\"jwt_token\", jsonData.token);",
+									"        pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"        console.log(\"✅ Tokens saved successfully\");",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "login"]
+						},
+						"description": "Login and auto-save JWT tokens"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"jwt_token\", jsonData.access_token);",
+									"    console.log(\"✅ Access token refreshed\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/refresh-token",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "refresh-token"]
+						},
+						"description": "Get a new access token using refresh token"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "logout"]
+						},
+						"description": "Logout and invalidate tokens (requires authentication)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "👤 User Profile",
+			"item": [
+				{
+					"name": "Get My Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "me"]
+						},
+						"description": "Get current logged-in user's profile"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "👔 Admin - Users",
+			"item": [
+				{
+					"name": "List All Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "users"]
+						},
+						"description": "Get all users (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"updated@example.com\",\n  \"name\": \"Updated Name\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "users", "{{user_id}}"]
+						},
+						"description": "Update user details (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "users", "{{user_id}}"]
+						},
+						"description": "Delete a user (admin only)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📦 Admin - Products",
+			"item": [
+				{
+					"name": "Create Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"product_id\", jsonData.id);",
+									"    console.log(\"✅ Product created with ID:\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"MacBook Pro 16\",\n  \"description\": \"Powerful laptop with M3 Max chip, 32GB RAM, 1TB SSD\",\n  \"price\": 2999.99,\n  \"category\": \"electronics\",\n  \"stock\": 15,\n  \"image_url\": \"https://example.com/macbook-pro.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "products"]
+						},
+						"description": "Create a new product (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "products", "{{product_id}}"]
+						},
+						"description": "Get product details by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "List Products (Paginated)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/products?page=1&page_size=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "products"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "page_size",
+									"value": "10",
+									"description": "Items per page (default: 10)"
+								}
+							]
+						},
+						"description": "List all products with pagination"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Products by Category",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/products/category/electronics?page=1&page_size=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "products", "category", "electronics"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "page_size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Filter products by category with pagination"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"MacBook Pro 16 - Updated\",\n  \"description\": \"Powerful laptop with M3 Max chip, 64GB RAM, 2TB SSD\",\n  \"price\": 3499.99,\n  \"category\": \"electronics\",\n  \"stock\": 20,\n  \"image_url\": \"https://example.com/macbook-pro-updated.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "products", "{{product_id}}"]
+						},
+						"description": "Update product details"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "products", "{{product_id}}"]
+						},
+						"description": "Delete a product"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🧪 Sample Data - Quick Setup",
+			"item": [
+				{
+					"name": "1. Create Admin Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    console.log(\"✅ Admin account created\");",
+									"    console.log(\"📧 Email: admin@example.com\");",
+									"    console.log(\"🔑 Password: Admin123!\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\",\n  \"name\": \"Admin User\",\n  \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Login as Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"jwt_token\", jsonData.token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    console.log(\"✅ Logged in successfully\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Create Sample Product - Electronics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"iPhone 15 Pro\",\n  \"description\": \"Latest iPhone with A17 Pro chip and titanium design\",\n  \"price\": 999.99,\n  \"category\": \"electronics\",\n  \"stock\": 50,\n  \"image_url\": \"https://example.com/iphone15.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "products"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Create Sample Product - Books",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Clean Code\",\n  \"description\": \"A Handbook of Agile Software Craftsmanship by Robert C. Martin\",\n  \"price\": 42.99,\n  \"category\": \"books\",\n  \"stock\": 100,\n  \"image_url\": \"https://example.com/clean-code.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "products"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Create Sample Product - Clothing",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Nike Air Max\",\n  \"description\": \"Comfortable running shoes with air cushioning\",\n  \"price\": 129.99,\n  \"category\": \"clothing\",\n  \"stock\": 75,\n  \"image_url\": \"https://example.com/nike-airmax.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "products"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🏥 Health Check",
+			"item": [
+				{
+					"name": "API Gateway Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/healthz",
+							"host": ["{{base_url}}"],
+							"path": ["healthz"]
+						},
+						"description": "Check if API Gateway is running"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "admin_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "product_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

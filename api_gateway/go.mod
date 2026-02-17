@@ -1,14 +1,15 @@
 module github.com/tird4d/go-microservices/api_gateway
 
-go 1.24.2
+go 1.25.6
 
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/tird4d/go-microservices/auth_service v0.0.0-20250411152857-d3292ae0ee8d
+	github.com/tird4d/go-microservices/product_service v0.0.0-00010101000000-000000000000
 	github.com/tird4d/go-microservices/user_service v0.0.0-00010101000000-000000000000
-	google.golang.org/grpc v1.72.0
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/grpc v1.78.0
+	google.golang.org/protobuf v1.36.11
 )
 
 require (
@@ -31,14 +32,16 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.17.0 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
+	golang.org/x/crypto v0.44.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace github.com/tird4d/go-microservices/user_service => ../user_service
 
 replace github.com/tird4d/go-microservices/auth_service => ../auth_service
+
+replace github.com/tird4d/go-microservices/product_service => ../product_service

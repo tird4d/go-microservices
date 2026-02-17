@@ -46,7 +46,7 @@ Goal: Token-based access control
 
 ✅ Role-based access control (admin, user)
 
-⬜ Phase 4: Testing & Monitoring
+🔄 Phase 4: Testing & Monitoring
 Goal: Build trust with automated checks and observability
 
 ✅ Unit tests with testify/mock
@@ -55,13 +55,17 @@ Goal: Build trust with automated checks and observability
 
 ✅ Add health check endpoints (e.g. /healthz)
 
-✅ Prepare for Prometheus + Grafana integration (in K8s)
-
 ⬜ Integration tests with Postman or Newman
 
 ⬜ Load Testing with k6 or ghz
 
 ⬜ CI/CD pipeline setup with GitHub Actions
+
+⬜ Add comprehensive test coverage (aim for 70%+)
+
+⬜ E2E tests for critical user flows
+
+⬜ Performance benchmarks for all services
 
 ✅ Phase 5: Dockerization
 Goal: Run the system in isolated containers
@@ -74,31 +78,97 @@ Goal: Run the system in isolated containers
 
 ✅ Verify end-to-end functionality with containers
 
-⬜ Phase 6: Kubernetes (K8s)
+🔄 Phase 6: Kubernetes (K8s)
 Goal: Deploy production-grade system
+
+✅ VPC provisioned with Terraform (infra/vpc)
+
+✅ EKS cluster created with eksctl (infra/eks)
 
 ⬜ Learn core concepts: Pods, Deployments, Services, ConfigMaps, Secrets
 
-⬜ Create K8s manifests for each service
+⬜ Create Helm charts for all services (user, auth, product, gateway)
 
-⬜ Optional: Build Helm charts for reuse
+⬜ Deploy MongoDB, Redis, RabbitMQ as StatefulSets
 
-⬜ Configure Ingress with NGINX
+⬜ Configure Ingress with NGINX Ingress Controller
 
-⬜ Enable auto-scaling and liveness/readiness probes
+⬜ Enable HorizontalPodAutoscaler (HPA)
+
+⬜ Add liveness/readiness/startup probes
 
 ⬜ Test rolling updates and service discovery
 
-⬜ Phase 7: Cloud Deployment
+⬜ Implement proper resource limits and requests
+
+🔄 Phase 7: Cloud Deployment
 Goal: Deploy to cloud with full CI/CD
 
-⬜ Choose cloud provider (EKS/GKE/AKS)
+✅ AWS EKS chosen and cluster running (eu-central-1)
 
-⬜ CI/CD pipeline with GitHub Actions or GitLab CI
+✅ Terraform for VPC infrastructure
 
-⬜ Store secrets securely
+⬜ Deploy all services to EKS with Helm
+
+⬜ ECR for container registry
+
+⬜ CI/CD pipeline with GitHub Actions → ECR → EKS
+
+⬜ AWS Secrets Manager or Kubernetes Secrets
+
+⬜ Register domain (e.g., go-microservices.com)
+
+⬜ cert-manager + Let's Encrypt for TLS
 
 ⬜ Enable monitoring, scaling, and recovery
 
-⬜ Register custom domain and SSL (HTTPS)
+⬜ CloudWatch Logs integration
+
+⬜ Set up backup strategy for databases
+
+⬜ Phase 8: Observability & Production Features
+Goal: Full production monitoring and operational excellence
+
+⬜ Deploy Prometheus + Grafana with Helm
+
+⬜ Add Prometheus metrics to all services (/metrics endpoint)
+
+⬜ Create custom Grafana dashboards per service
+
+⬜ Deploy Jaeger for distributed tracing
+
+⬜ Instrument all services with OpenTelemetry
+
+⬜ Add trace propagation across all gRPC calls
+
+⬜ Centralized logging with EFK stack or Loki
+
+⬜ Set up alerting rules (Prometheus AlertManager)
+
+⬜ Add custom business metrics (login count, product views, etc.)
+
+⬜ Create runbooks for common issues
+
+⬜ Phase 9: Advanced Patterns & Best Practices
+Goal: Production-ready code quality and patterns
+
+⬜ Implement Circuit Breaker pattern (gobreaker)
+
+⬜ Add retry logic with exponential backoff
+
+⬜ Implement Rate Limiting
+
+⬜ Add request/response validation middleware
+
+⬜ Implement API versioning (v1, v2)
+
+⬜ Add correlation IDs to all logs
+
+⬜ Implement graceful degradation
+
+⬜ Add feature flags
+
+⬜ Database migration strategy
+
+⬜ Blue-Green or Canary deployments
 
