@@ -7,7 +7,8 @@ option go_package = "github.com/tird4d/go-microservices/auth_service/proto;proto
 service AuthService {
   rpc Login (LoginRequest) returns (LoginResponse);
   rpc Validate (ValidateRequest) returns (ValidateResponse);
-  rpc ValidateRefreshTokenValidateRefreshToken(ValidateRefreshTokenRequest) returns (ValidateRefreshTokenResponse);
+  rpc ValidateRefreshToken(ValidateRefreshTokenRequest) returns (ValidateRefreshTokenResponse);
+  rpc Logout (LogoutRequest) returns (LogoutResponse);
 }
 
 message LoginRequest {
@@ -28,6 +29,7 @@ message ValidateRequest {
 message ValidateResponse {
   string user_id = 1;
   string email = 2;
+  string role = 3;
 }
 
 message ValidateRefreshTokenRequest
@@ -39,4 +41,12 @@ message ValidateRefreshTokenResponse
 {
     string access_token = 1;
     string refresh_token = 2;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutResponse {
+  string message = 1;
 }

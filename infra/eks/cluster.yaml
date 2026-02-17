@@ -1,0 +1,29 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: go-microservices
+  region: eu-central-1
+  version: "1.29"
+
+vpc:
+  id: "vpc-0ac1212432f02566a"
+  subnets:
+    private:
+      eu-central-1a:
+        id: "subnet-0766fc3ce001736c9"
+      eu-central-1b:
+        id: "subnet-0b604c02558ecf913"
+    public:
+      eu-central-1a:
+        id: "subnet-01672ca5f553ff01d"
+      eu-central-1b:
+        id: "subnet-050507adf1031161f"
+
+managedNodeGroups:
+  - name: ng-1
+    instanceType: t3.small
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 2
+    privateNetworking: true

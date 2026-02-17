@@ -44,13 +44,14 @@ spec:
             - name: grpc
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ include "auth-service.fullname" . }}-secrets
           env:
-            - name: JWT_SECRET
-              value: "test"
-            - name: REDIS_ADDR
-              value: "redis-release-master:6379"
-            - name: USER_SERVICE_ADDR
-              value: "user-service:50051"
+            - name: PORT
+              value: {{ .Values.env.port | quote }}
+            - name: MONGO_DB
+              value: {{ .Values.env.mongoDb | quote }}
 
           livenessProbe:
             tcpSocket:

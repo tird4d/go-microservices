@@ -47,14 +47,16 @@ func (s *AuthServer) Validate(ctx context.Context, req *authpb.ValidateRequest) 
 	// گرفتن اطلاعات از claims
 	userID, ok1 := claims["user_id"].(string)
 	email, ok2 := claims["email"].(string)
+	role, ok3 := claims["role"].(string)
 
-	if !ok1 || !ok2 {
+	if !ok1 || !ok2 || !ok3 {
 		return nil, status.Error(codes.Internal, "Invalid token payload")
 	}
 
 	return &authpb.ValidateResponse{
 		UserId: userID,
 		Email:  email,
+		Role:   role,
 	}, nil
 }
 
@@ -69,5 +71,22 @@ func (s *AuthServer) ValidateRefreshToken(ctx context.Context, req *authpb.Valid
 	return &authpb.ValidateRefreshTokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: RefreshToken,
+	}, nil
+}
+
+func (s *AuthServer) Logout(ctx context.Context, req *authpb.LogoutRequest) (*authpb.LogoutResponse, error) {
+	log.Printf("🔐 Logout called with token: %s", req.RefreshToken)
+
+	err := services.DeleteRefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		if status.Code(err) == codes.Unauthenticated {
+			return nil, status.Error(codes.Unauthenticated, "Invalid or expired refresh token")
+		}
+		log.Printf("❌ Logout failed: %v", err)
+		return nil, status.Error(codes.Internal, "Failed to logout")
+	}
+
+	return &authpb.LogoutResponse{
+		Message: "Logout successful",
 	}, nil
 }

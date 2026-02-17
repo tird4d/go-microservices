@@ -13,59 +13,39 @@ spec:
       {{- include "user-service.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       labels:
         {{- include "user-service.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/path: /metrics
-        prometheus.io/port: "9090"
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
     spec:
-      selector:
-        app: user-service
-      ports:
-        - protocol: TCP
-          port: 9090
-          targetPort: 9090
+      serviceAccountName: {{ include "user-service.serviceAccountName" . }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "user-service.serviceAccountName" . }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          {{- with .Values.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: grpc
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ include "user-service.fullname" . }}-secrets
           env:
-          - name: MONGO_URI
-            value: "mongodb://mongo-release-mongodb:27017"
-          - name: PORT
-            value: "50051"
-          - name: MONGO_DB
-            value: "go-microservice"
-          - name: JWT_SECRET
-            value: "test"
-          - name: RABBITMQ_CONNECTION_STRING
-            value: amqp://admin:mypassword123@rabbitmq.rabbitmq.svc.cluster.local:5672/
+            - name: PORT
+              value: {{ .Values.env.port | quote }}
+            - name: MONGO_DB
+              value: {{ .Values.env.mongoDb | quote }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

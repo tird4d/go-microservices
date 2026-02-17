@@ -18,14 +18,14 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		logger.Log.Fatal("⚠️ Error loading .env file", "error", err)
-	}
-
 	logger.InitLogger(true)
 
-	config.ConnectDB()
+	err := godotenv.Load()
+	if err != nil {
+		logger.Log.Infow("⚠️ Error loading .env file", "error", err)
+	}
+
+	_, err = config.ConnectDB()
 
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {

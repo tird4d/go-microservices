@@ -26,3 +26,6 @@ go.work.sum
 .vscode
 
 **main
+**coverage.out
+**coverage.html
+secrets/

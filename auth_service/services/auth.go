@@ -38,7 +38,7 @@ func LoginUser(ctx context.Context, userClient userpb.UserServiceClient, email, 
 		return "", "", status.Errorf(codes.InvalidArgument, "invalid user ID")
 	}
 
-	token, err := utils.GenerateJWT(oid, res.Email)
+	token, err := utils.GenerateJWT(oid, res.Email, res.Role)
 	if err != nil {
 		logger.Error("Failed to generate JWT: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to generate JWT")
@@ -51,8 +51,6 @@ func LoginUser(ctx context.Context, userClient userpb.UserServiceClient, email, 
 	}
 
 	// delete the old refresh token if it exists
-
-	log.Printf("✅ JWT generated: %s RefreshToken generated %s", token, refreshToken)
 	return token, refreshToken, nil
 
 }
@@ -88,7 +86,7 @@ func ValidateRefreshToken(ctx context.Context, userClient userpb.UserServiceClie
 	}
 
 	// Generate a new access token
-	token, err := utils.GenerateJWT(oid, user.Email)
+	token, err := utils.GenerateJWT(oid, user.Email, user.Role)
 	if err != nil {
 		log.Printf("❌ Failed to generate JWT: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to generate JWT")
@@ -129,7 +127,21 @@ func createRefreshToken(ctx context.Context, userID string) (string, error) {
 }
 
 func DeleteRefreshToken(ctx context.Context, refreshToken string) error {
-	_, err := config.RedisClient.Del(ctx, refreshToken).Result()
+	// Check if the refresh token is exists in Redis
+	ok, err := config.RedisClient.Exists(ctx, refreshToken).Result()
+
+	if err != nil {
+		log.Printf("❌ Failed to check if refresh token exists: %v", err)
+		return status.Errorf(codes.Internal, "failed to check if refresh token exists")
+	}
+
+	if ok == 0 {
+		log.Printf("❌ Refresh token not found in Redis")
+		return status.Errorf(codes.Unauthenticated, "invalid refresh token")
+	}
+
+	// Delete the refresh token from Redis
+	_, err = config.RedisClient.Del(ctx, refreshToken).Result()
 
 	return err
 
@@ -139,7 +151,7 @@ func userServiceResponseHandler(res *userpb.UserCredentialResponse, err error) (
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.NotFound {
-			return nil, status.Error(codes.Unauthenticated, "invalid email or password")
+			return nil, status.Error(codes.NotFound, "email not found")
 		}
 		logger.Error("Failed to connect to user_service: %v", err)
 		return nil, status.Error(codes.Unavailable, "cannot connect to user service")

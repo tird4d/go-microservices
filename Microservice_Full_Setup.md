@@ -70,6 +70,14 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 Make sure `$GOPATH/bin` is in your PATH. Then generate files:
 ```bash
 protoc --go_out=. --go-grpc_out=. proto/user.proto
+
+#more parameter
+protoc \
+    --go_out=. \
+    --go-grpc_out=.  \
+    --go_opt=paths=source_relative \
+    --go-grpc_opt=paths=source_relative \
+    proto/auth.proto
 ```
 
 ---

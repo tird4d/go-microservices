@@ -1,66 +1,98 @@
 services:
 
+  frontend-service:
+    build:
+      context: ./frontend_service
+      dockerfile: Dockerfile
+      target: development
+    container_name: go-micro-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+
+  api-gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    container_name: go-micro-api-gateway
+    restart: always
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./api_gateway/.env
+    depends_on:
+      - user-service
+      - auth-service
+
   user-service:
     build:
-      context: ./user-service
+      context: ./user_service
       dockerfile: Dockerfile
     container_name: go-micro-user-service
     restart: always
     ports:
       - "50051:50051"
+    volumes:
+      - ./user_service:/app
     env_file:
-      ./user_service/.env
+      - ./user_service/.env
     depends_on:
       - mongo
-    volumes:
-      - .:/app
-    working_dir: /app
-    command: go run main.go
 
   auth-service:
     build:
-      context: ./auth-service
+      context: ./auth_service
       dockerfile: Dockerfile
     container_name: go-micro-auth-service
     restart: always
     ports:
       - "50052:50052"
     env_file:
-      ./auth_service/.env
+      - ./auth_service/.env
     depends_on:
       - mongo
+      - redis
+
+  product-service:
+    build:
+      context: ./product_service
+      dockerfile: Dockerfile
+    container_name: go-micro-product-service
+    restart: always
+    ports:
+      - "50053:50053"
+    env_file:
+      - ./product_service/.env
+    depends_on:
+      - mongo
+      - redis
+  mongo:
+    image: mongo:6
+    container_name: go-micro-mongo
+    restart: always
+    ports:
+      - "27017:27017"
     volumes:
-      - .:/app
-    working_dir: /app
-    command: go run main.go
+      - mongo-data:/data/db
 
+  redis:
+    image: redis:7
+    container_name: go-micro-redis
+    restart: always
+    ports:
+      - "6379:6379"
 
-
-    mongo:
-      image: mongo:6
-      container_name: go-micro-mongo
-      restart: always
-      ports:
-        - "27017:27017"
-      volumes:
-        - mongo-data:/data/db
-
-    redis:
-      image: redis:7
-      container_name: go-micro-redis
-      restart: always
-      ports:
-        - "6379:6379"
-
-    rabbitmq:
-      image: rabbitmq:3-management
-      container_name: rabbitmq
-      ports:
-        - "5672:5672"   # für Anwendungen
-        - "15672:15672" # für Web UI
-      environment:
-        RABBITMQ_DEFAULT_USER: guest
-        RABBITMQ_DEFAULT_PASS: guest
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 volumes:
   mongo-data:
