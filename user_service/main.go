@@ -12,6 +12,7 @@ import (
 	"github.com/tird4d/go-microservices/user_service/logger"
 	"github.com/tird4d/go-microservices/user_service/metrics"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
+	"github.com/tird4d/go-microservices/user_service/tracing"
 	"google.golang.org/grpc"
 	health "google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -24,6 +25,26 @@ func main() {
 	if err != nil {
 		logger.Log.Infow("⚠️ Error loading .env file", "error", err)
 	}
+
+	// Initialize tracing
+	jaegerEndpoint := os.Getenv("JAEGER_ENDPOINT")
+	if jaegerEndpoint == "" {
+		jaegerEndpoint = "jaeger:4317" // Default for docker-compose
+	}
+	
+	tp, err := tracing.InitTracer("user-service", jaegerEndpoint)
+	if err != nil {
+		logger.Log.Errorw("❌ Failed to initialize tracer", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := tracing.Shutdown(tp); err != nil {
+			logger.Log.Errorw("❌ Failed to shutdown tracer", "error", err)
+		}
+	}()
+	logger.Log.Infow("✅ Tracing initialized", "endpoint", jaegerEndpoint)
+
+
 
 	_, err = config.ConnectDB()
 

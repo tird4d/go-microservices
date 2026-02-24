@@ -14,6 +14,8 @@ import (
 	"github.com/tird4d/go-microservices/user_service/repositories"
 	"github.com/tird4d/go-microservices/user_service/services"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -23,6 +25,17 @@ type Server struct {
 }
 
 func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*userpb.RegisterResponse, error) {
+	// Start tracing span
+	tracer := otel.Tracer("user-service")
+	ctx, span := tracer.Start(ctx, "Register")
+	defer span.End()
+
+	// Add attributes to span
+	span.SetAttributes(
+		attribute.String("user.email", req.GetEmail()),
+		attribute.String("user.name", req.GetName()),
+		attribute.String("user.role", req.GetRole()),
+	)
 
 	// Start the timer for request duration
 	timer := prometheus.NewTimer(metrics.RequestDurationHistogram.WithLabelValues("RegisterUser"))
@@ -32,11 +45,33 @@ func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*us
 
 	logger.Log.Info("Received Register request", "request", req)
 
+
+	// ============ SPAN: Validation ============
+	ctx, validateSpan := tracer.Start(ctx, "Validate")
+	time.Sleep(100 * time.Millisecond) // Simulate validation time
+	if req.GetEmail() == "" {
+		validateSpan.RecordError(fmt.Errorf("email required"))
+		validateSpan.End()
+		span.RecordError(fmt.Errorf("validation failed"))
+		return nil, fmt.Errorf("email required")
+	}
+	validateSpan.End()
+
+
+	// ============ SPAN: Register Service ============
 	repo := &repositories.MongoUserRepository{}
+	ctx, svcSpan := tracer.Start(ctx, "RegisterUserService")
+	time.Sleep(200 * time.Millisecond) // Simulate database operation
 	result, err := services.RegisterUser(ctx, repo, req.GetName(), req.GetEmail(), req.GetPassword(), req.GetRole())
+	svcSpan.End()
 	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Bool("error", true))
 		return nil, err
 	}
+
+	userID := result.InsertedID.(primitive.ObjectID).Hex()
+	span.SetAttributes(attribute.String("user.id", userID))
 
 	//Publish user registered event
 	// err = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
@@ -51,7 +86,7 @@ func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*us
 	// }
 
 	return &userpb.RegisterResponse{
-		Id:      result.InsertedID.(primitive.ObjectID).Hex(),
+		Id:      userID,
 		Message: "User registered successfully....",
 	}, nil
 }
@@ -98,6 +133,11 @@ func (s *Server) GetUserCredential(ctx context.Context, req *userpb.GetUserCrede
 
 func (s *Server) GetAllUsers(ctx context.Context, req *userpb.GetAllUsersRequest) (*userpb.GetAllUsersResponse, error) {
 
+	// Start tracing span
+	tracer := otel.Tracer("user-service")
+	ctx, span := tracer.Start(ctx, "GetAllUser")
+	defer span.End()
+
 	page := req.GetPage()
 	if page < 1 {
 		page = 1
@@ -107,12 +147,27 @@ func (s *Server) GetAllUsers(ctx context.Context, req *userpb.GetAllUsersRequest
 		pageSize = 10
 	}
 
-	repo := &repositories.MongoUserRepository{}
+	span.SetAttributes(
+		attribute.Int64("pageSize", pageSize),
+		attribute.Int64("page", page),
+	)
 
+	ctx, prePareSpan := tracer.Start(ctx, "Prepare for DB")
+		time.Sleep(500 * time.Millisecond) // Simulate database operation
+	prePareSpan.End()
+
+	ctx, svcSpan := tracer.Start(ctx, "GetUserFromDB")
+
+	repo := &repositories.MongoUserRepository{}
+	
 	users, totalCount, err := services.GetAllUsers(ctx, repo, page, pageSize)
 	if err != nil {
+		svcSpan.RecordError(fmt.Errorf("db error"))
+		svcSpan.End()
 		return nil, status.Errorf(codes.Internal, "Failed to retrieve users")
 	}
+	svcSpan.End()
+
 
 	// protoUsers := make([]*userpb.UserResponse, 0, len(users))
 	protoUsers := []*userpb.UserResponse{}
