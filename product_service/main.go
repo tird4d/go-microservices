@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"net"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/tird4d/go-microservices/product_service/config"
 	"github.com/tird4d/go-microservices/product_service/handlers"
+	"github.com/tird4d/go-microservices/product_service/interceptors"
 	"github.com/tird4d/go-microservices/product_service/logger"
+	"github.com/tird4d/go-microservices/product_service/tracing"
 	productpb "github.com/tird4d/go-microservices/product_service/proto"
 
 	"google.golang.org/grpc"
@@ -22,6 +25,14 @@ func main() {
 		logger.Log.Infow("⚠️ Error loading .env file", "error", err)
 	}
 
+	// Initialize Jaeger tracing
+	tp, err := tracing.InitTracer("product-service", "jaeger:4317")
+	if err != nil {
+		logger.Log.Errorw("❌ Failed to initialize tracer", "error", err)
+		os.Exit(1)
+	}
+	defer tp.Shutdown(context.Background())
+
 	_, err = config.ConnectDB()
 
 	lis, err := net.Listen("tcp", ":50053")
@@ -30,7 +41,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptors.UnaryServerInterceptor))
 
 	// ✅ Register UserService
 	productpb.RegisterProductServiceServer(grpcServer, &handlers.Server{})

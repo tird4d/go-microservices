@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tird4d/go-microservices/api_gateway/logger"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -75,7 +75,7 @@ func (a *AdminHandler) UpdateUserHandler(c *gin.Context) {
 	_, err := a.UserClient.UpdateUser(ctx, &updateRequest)
 
 	if err != nil {
-		log.Printf("Error updating user: %v", err)
+		logger.Log.Infof("Error updating user: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 		return
 	}

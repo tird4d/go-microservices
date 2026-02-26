@@ -31,7 +31,7 @@ func (p *ProductHandler) CreateHandler(c *gin.Context) {
 	}
 
 	// Create gRPC context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	// Call product-service via gRPC
@@ -73,7 +73,7 @@ func (p *ProductHandler) GetProductHandler(c *gin.Context) {
 	}
 
 	// Create gRPC context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	// Call product-service via gRPC
@@ -127,7 +127,7 @@ func (p *ProductHandler) UpdateProductHandler(c *gin.Context) {
 	}
 
 	// Create gRPC context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	// Call product-service via gRPC
@@ -171,7 +171,7 @@ func (p *ProductHandler) DeleteProductHandler(c *gin.Context) {
 	}
 
 	// Create gRPC context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	// Call product-service via gRPC
@@ -211,7 +211,7 @@ func (p *ProductHandler) ListProductsHandler(c *gin.Context) {
 	}
 
 	// Create gRPC context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	// Call product-service via gRPC
@@ -277,7 +277,7 @@ func (p *ProductHandler) GetProductsByCategoryHandler(c *gin.Context) {
 	}
 
 	// Create gRPC context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	// Call product-service via gRPC

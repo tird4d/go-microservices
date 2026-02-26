@@ -51,7 +51,7 @@ func StartUserConsumer(ch *amqp.Channel) {
 				Name:  event.Name,
 			})
 
-			log.Printf("✅ User %s saved (%s)", event.Name, event.UserID)
+			logger.Log.Infof("✅ User %s saved (%s)", event.Name, event.UserID)
 		}
 	}()
 }

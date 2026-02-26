@@ -1,22 +1,15 @@
 package logger
 
-import (
-	"log"
-	"os"
-)
+import "go.uber.org/zap"
 
-var IsDebug = os.Getenv("DEBUG_MODE") == "true"
+var Log *zap.SugaredLogger
 
-func Info(msg string, args ...interface{}) {
-	log.Printf("ℹ️ "+msg, args...)
-}
-
-func Error(msg string, args ...interface{}) {
-	log.Printf("❌ "+msg, args...)
-}
-
-func Debug(msg string, args ...interface{}) {
-	if IsDebug {
-		log.Printf("🐞 "+msg, args...)
+func InitLogger(debug bool) {
+	var logger *zap.Logger
+	if debug {
+		logger, _ = zap.NewDevelopment()
+	} else {
+		logger, _ = zap.NewProduction()
 	}
+	Log = logger.Sugar()
 }
