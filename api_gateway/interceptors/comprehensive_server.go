@@ -12,8 +12,17 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
+
+// truncateString limits string length
+func truncateStringForSpan(s string, maxLen int) string {
+	if len(s) > maxLen {
+		return s[:maxLen] + "...[truncated]"
+	}
+	return s
+}
 
 // ComprehensiveUnaryServerInterceptor captures EVERYTHING automatically:
 // - Request parameters (serialized from proto)
@@ -44,18 +53,19 @@ func ComprehensiveUnaryServerInterceptor(ctx context.Context, req interface{}, i
 	// ===== AUTOMATICALLY CAPTURE REQUEST DETAILS =====
 	span.SetAttributes(
 		attribute.String("rpc.method", info.FullMethod),
-		attribute.String("rpc.service", info.FullService),
 		attribute.String("rpc.request_type", fmt.Sprintf("%T", req)),
 	)
 
 	// If request is a protobuf message, capture its fields
 	if msg, ok := req.(proto.Message); ok {
-		// You could parse the proto and add specific fields as attributes
-		// Example: if it has a "Page" field, capture it
-		reqStr := msg.String() // This captures the entire proto as string
-		span.SetAttributes(
-			attribute.String("rpc.request_data", truncateString(reqStr, 500)), // Limit size
-		)
+		// Convert proto to JSON for better readability
+		jsonBytes, err := protojson.Marshal(msg)
+		if err == nil {
+			reqStr := string(jsonBytes)
+			span.SetAttributes(
+				attribute.String("rpc.request_data", truncateStringForSpan(reqStr, 500)),
+			)
+		}
 	}
 
 	// Call the actual handler
@@ -73,10 +83,13 @@ func ComprehensiveUnaryServerInterceptor(ctx context.Context, req interface{}, i
 			attribute.String("rpc.response_type", fmt.Sprintf("%T", resp)),
 		)
 		if msg, ok := resp.(proto.Message); ok {
-			respStr := msg.String()
-			span.SetAttributes(
-				attribute.String("rpc.response_data", truncateString(respStr, 500)),
-			)
+			jsonBytes, err := protojson.Marshal(msg)
+			if err == nil {
+				respStr := string(jsonBytes)
+				span.SetAttributes(
+					attribute.String("rpc.response_data", truncateStringForSpan(respStr, 500)),
+				)
+			}
 		}
 	}
 
@@ -96,12 +109,4 @@ func ComprehensiveUnaryServerInterceptor(ctx context.Context, req interface{}, i
 	}
 
 	return resp, err
-}
-
-// Helper function to truncate long strings for attributes
-func truncateString(s string, maxLen int) string {
-	if len(s) > maxLen {
-		return s[:maxLen] + "..."
-	}
-	return s
 }
