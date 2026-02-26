@@ -10,8 +10,8 @@ import (
 	"github.com/tird4d/go-microservices/product_service/handlers"
 	"github.com/tird4d/go-microservices/product_service/interceptors"
 	"github.com/tird4d/go-microservices/product_service/logger"
-	"github.com/tird4d/go-microservices/product_service/tracing"
 	productpb "github.com/tird4d/go-microservices/product_service/proto"
+	"github.com/tird4d/go-microservices/product_service/tracing"
 
 	"google.golang.org/grpc"
 )

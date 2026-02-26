@@ -1,10 +1,10 @@
 package interceptors
 
 import (
-"context"
+	"context"
 
-"go.opentelemetry.io/otel/propagation"
-"google.golang.org/grpc/metadata"
+	"go.opentelemetry.io/otel/propagation"
+	"google.golang.org/grpc/metadata"
 )
 
 // Helper to extract trace context from incoming RPC

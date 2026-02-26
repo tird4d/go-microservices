@@ -1,14 +1,14 @@
 package interceptors
 
 import (
-"context"
+	"context"
 
-"go.opentelemetry.io/otel"
-"go.opentelemetry.io/otel/attribute"
-"go.opentelemetry.io/otel/codes"
-"go.opentelemetry.io/otel/propagation"
-"go.opentelemetry.io/otel/trace"
-"google.golang.org/grpc"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 )
 
 var tracer = otel.Tracer("product-service")
