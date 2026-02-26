@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tird4d/go-microservices/user_service/config"
 	"github.com/tird4d/go-microservices/user_service/handlers"
+	"github.com/tird4d/go-microservices/user_service/interceptors"
 	"github.com/tird4d/go-microservices/user_service/logger"
 	"github.com/tird4d/go-microservices/user_service/metrics"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
@@ -64,7 +65,9 @@ func main() {
 		logger.Log.Infow("✅ Metrics server is running on port", "port", 9090)
 	}()
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.UnaryServerInterceptor),
+	)
 
 	// ✅ Register UserService
 	userpb.RegisterUserServiceServer(grpcServer, &handlers.Server{})

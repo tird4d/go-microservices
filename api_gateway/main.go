@@ -9,7 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/tird4d/go-microservices/api_gateway/handlers"
+	"github.com/tird4d/go-microservices/api_gateway/interceptors"
+	"github.com/tird4d/go-microservices/api_gateway/logger"
 	"github.com/tird4d/go-microservices/api_gateway/middlewares"
+	"github.com/tird4d/go-microservices/api_gateway/tracing"
 	authpb "github.com/tird4d/go-microservices/auth_service/proto"
 	productpb "github.com/tird4d/go-microservices/product_service/proto"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
@@ -19,16 +22,38 @@ import (
 )
 
 func main() {
+	logger.InitLogger(true)
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Error loading .env file, using default values")
 	}
 
+	// Initialize tracing
+	jaegerEndpoint := os.Getenv("JAEGER_ENDPOINT")
+	if jaegerEndpoint == "" {
+		jaegerEndpoint = "jaeger:4317" // Default for docker-compose
+	}
+
+
+	tp, err := tracing.InitTracer("api-gateway", jaegerEndpoint)
+	if err != nil {
+		logger.Log.Errorw("❌ Failed to initialize tracer", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := tracing.Shutdown(tp); err != nil {
+			logger.Log.Errorw("❌ Failed to shutdown tracer", "error", err)
+		}
+	}()
+	logger.Log.Infow("✅ Tracing initialized", "endpoint", jaegerEndpoint)
+
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Connecting to gRPC server for user service
-	conn, err := grpc.DialContext(ctx, os.Getenv("USER_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, os.Getenv("USER_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(interceptors.UnaryClientInterceptor))
 	if err != nil {
 		log.Fatalf("❌ could not connect to gRPC server: %v", err)
 	}
@@ -37,7 +62,7 @@ func main() {
 	userClient := userpb.NewUserServiceClient(conn)
 
 	// Connecting to gRPC server for auth service
-	authConn, err := grpc.DialContext(ctx, os.Getenv("AUTH_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authConn, err := grpc.DialContext(ctx, os.Getenv("AUTH_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(interceptors.UnaryClientInterceptor))
 	if err != nil {
 		log.Fatalf("❌ could not connect to auth gRPC server: %v", err)
 	}
@@ -46,7 +71,7 @@ func main() {
 	authClient := authpb.NewAuthServiceClient(authConn)
 
 
-	productConn, err := grpc.DialContext(ctx, os.Getenv("PRODUCT_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	productConn, err := grpc.DialContext(ctx, os.Getenv("PRODUCT_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(interceptors.UnaryClientInterceptor))
 	if err != nil {
 		log.Fatalf("❌ could not connect to auth gRPC server: %v", err)
 	}
@@ -56,6 +81,9 @@ func main() {
 
 	// ایجاد روت‌ها
 	router := gin.Default()
+
+	// Add tracing middleware for all requests
+	router.Use(middlewares.TracingMiddleware())
 
 	userHandler := handlers.UserHandler{
 		UserClient: userClient,
