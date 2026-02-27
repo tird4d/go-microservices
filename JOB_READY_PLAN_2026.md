@@ -44,15 +44,15 @@
 - [x] Add comprehensive gRPC request/response capture
 - [x] Mask sensitive fields in traces (passwords, tokens)
 
-#### Week 3-4: Testing & Quality (40h)
-- [ ] Write integration tests for all API endpoints
-- [ ] Add table-driven tests for business logic
-- [ ] Set up test coverage reporting
-- [ ] Achieve 70%+ coverage for all services
-- [ ] Add Postman collection tests (Newman CI)
-- [ ] Document testing strategy
+#### Week 3-4: Testing & Quality (40h) ✅ COMPLETED
+- [x] Write integration tests for all API endpoints
+- [x] Add table-driven tests for business logic
+- [x] Set up test coverage reporting
+- [x] Achieve 70%+ coverage for all services (Achieved 76%!)
+- [x] Add Postman collection tests (Newman CI)
+- [x] Document testing strategy
 
-#### Week 5-6: Load Testing (40h)
+#### Week 5-6: Load Testing (40h) 🔄 IN PROGRESS
 - [ ] Install k6 for load testing
 - [ ] Create test scenarios for each service
 - [ ] Test API Gateway under 1K, 5K, 10K requests/sec
@@ -68,7 +68,7 @@
 - [ ] Add security scanning (Trivy)
 - [ ] Document CI/CD flow
 
-**Deliverable:** Fully tested microservices with observability basics
+**Deliverable:** Fully tested microservices with observability basics ✅ (Tests & Tracing DONE!)
 
 ---
 
@@ -325,16 +325,16 @@
 
 ## 🎯 Milestones & Checkpoints
 
-| Month | Milestone | Success Metric |
-|-------|-----------|----------------|
-| 2 | Core features complete | All services tested, CI/CD working |
-| 3 | EKS deployment live | Can demo live system with HTTPS |
-| 4 | Production monitoring | Grafana dashboards + alerts working |
-| 5 | Portfolio project live | TirFramework demo publicly accessible |
-| 7 | Second Go project done | Different pattern implemented |
-| 9 | OSS contributions | 10+ merged PRs to known projects |
-| 10 | Interview ready | Can ace system design + coding rounds |
-| 12 | Job offer accepted | Contract signed for Feb/Mar 2027 start |
+| Month | Milestone | Success Metric | Status |
+|-------|-----------|----------------|--------|
+| 2 | Core features complete | All services tested, CI/CD working | 🔄 In Progress (Tests ✅, Tracing ✅) |
+| 3 | EKS deployment live | Can demo live system with HTTPS | ⏳ Next |
+| 4 | Production monitoring | Grafana dashboards + alerts working | ⏳ Next |
+| 5 | Portfolio project live | TirFramework demo publicly accessible | ⏳ Next |
+| 7 | Second Go project done | Different pattern implemented | ⏳ Future |
+| 9 | OSS contributions | 10+ merged PRs to known projects | ⏳ Future |
+| 10 | Interview ready | Can ace system design + coding rounds | ⏳ Future |
+| 12 | Job offer accepted | Contract signed for Feb/Mar 2027 start | 🎯 Goal |
 
 ---
 
