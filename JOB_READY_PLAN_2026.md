@@ -18,9 +18,9 @@
 - **Full-Stack:** React, MongoDB, Redis, RabbitMQ
 
 ### ⚠️ Areas to Strengthen
-- **Go:** Mid-level (learning, need production patterns)
+- **Go:** Mid-level → Growing (production patterns ✓, interceptors ✓, tracing ✓)
 - **Kubernetes:** Infrastructure ready, need production deployment experience
-- **Observability:** Missing Prometheus/Grafana/Jaeger hands-on
+- **Observability:** ✅ Jaeger/OpenTelemetry done! (Next: Prometheus/Grafana)
 - **Testing:** Need stronger TDD culture and coverage
 - **Team Collaboration:** Mostly solo/small team work
 
@@ -34,12 +34,15 @@
 **German:** Continue B1+ practice
 
 #### Week 1-2: Jaeger Tracing (40h)
-- [ ] Add jaeger-all-in-one to docker-compose
-- [ ] Install OpenTelemetry SDK in all Go services
-- [ ] Add trace context propagation in gRPC calls
-- [ ] Create trace spans for all major operations
-- [ ] Test distributed traces end-to-end
-- [ ] Document with screenshots and examples
+- [x] Add jaeger-all-in-one to docker-compose
+- [x] Install OpenTelemetry SDK in all Go services
+- [x] Add trace context propagation in gRPC calls
+- [x] Create trace spans for all major operations
+- [x] Test distributed traces end-to-end
+- [x] Document with screenshots and examples
+- [x] Add comprehensive HTTP request tracing (with sanitization)
+- [x] Add comprehensive gRPC request/response capture
+- [x] Mask sensitive fields in traces (passwords, tokens)
 
 #### Week 3-4: Testing & Quality (40h)
 - [ ] Write integration tests for all API endpoints
