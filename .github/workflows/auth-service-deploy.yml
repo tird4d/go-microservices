@@ -1,13 +1,13 @@
 
-name: Build and Deploy User Service to EKS
+name: Build and Deploy Auth Service to EKS
 
 on:
   push:
     branches: [main]
     paths:
-      - 'user_service/**'  # Only trigger if user_service code changed
-      - 'charts/user-service/**'
-      - '.github/workflows/user-service-deploy.yml'
+      - 'auth_service/**'  # Only trigger if auth_service code changed
+      - 'charts/auth-service/**'
+      - '.github/workflows/auth-service-deploy.yml'
 
 jobs:
   build-and-deploy:
@@ -35,16 +35,16 @@ jobs:
       # Step 4: Build Docker image
       - name: Build Docker image
         run: |
-          cd user_service
-          docker build -t 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:${{ github.sha }} .
-          docker tag 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:${{ github.sha }} \
-                     114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:latest
+          cd auth_service
+          docker build -t 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:${{ github.sha }} .
+          docker tag 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:${{ github.sha }} \
+                     114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:latest
       
       # Step 5: Push to ECR
       - name: Push to Amazon ECR
         run: |
-          docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:${{ github.sha }}
-          docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:latest
+          docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:${{ github.sha }}
+          docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:latest
       
       # Step 6: Update kubeconfig
       - name: Update kubeconfig
@@ -57,12 +57,21 @@ jobs:
       # The secrets/ directory is gitignored - we build it on the fly here
       - name: Create secrets file
         env:
-          MONGO_URI: ${{ secrets.USER_SERVICE_MONGO_URI }}
+          MONGO_URI: ${{ secrets.AUTH_SERVICE_MONGO_URI }}
+          JWT_SECRET: ${{ secrets.AUTH_SERVICE_JWT_SECRET }}
+          RABBITMQ_URI: ${{ secrets.AUTH_SERVICE_RABBITMQ_URI }}
+          REDIS_ADDR: ${{ secrets.AUTH_SERVICE_REDIS_ADDR }}
+          REDIS_TLS: ${{ secrets.AUTH_SERVICE_REDIS_TLS }}
         run: |
           mkdir -p secrets
-          cat <<EOF > secrets/user-service.values.prod.yaml
+          cat <<EOF > secrets/auth-service.values.prod.yaml
           secrets:
             mongoUri: "${MONGO_URI}"
+            jwtSecret: "${JWT_SECRET}"
+            rabbitmqUri: "${RABBITMQ_URI}"
+            redisAddr: "${REDIS_ADDR}"
+            userServiceAddr: "user-service.prod.svc.cluster.local:50051"
+            redisTls: "${REDIS_TLS}"
           EOF
 
       # Step 8: Ensure namespace exists
@@ -73,15 +82,15 @@ jobs:
       # Step 9: Deploy with Helm
       - name: Deploy with Helm
         run: |
-          helm upgrade --install user-service ./charts/user-service \
-            -f charts/user-service/values.yaml \
-            -f secrets/user-service.values.prod.yaml \
+          helm upgrade --install auth-service ./charts/auth-service \
+            -f charts/auth-service/values.yaml \
+            -f secrets/auth-service.values.prod.yaml \
             --namespace prod \
-            --wait \
+            --atomic \
             --timeout 5m
       
       # Step 10: Verify deployment
       - name: Verify deployment
         run: |
-          kubectl rollout status deployment/user-service -n prod --timeout=5m
-          kubectl get pods -n prod -l app.kubernetes.io/instance=user-service
+          kubectl rollout status deployment/auth-service -n prod --timeout=5m
+          kubectl get pods -n prod -l app.kubernetes.io/instance=auth-service
