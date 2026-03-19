@@ -65,17 +65,23 @@ jobs:
             mongoUri: "${MONGO_URI}"
           EOF
 
-      # Step 8: Deploy with Helm
+      # Step 8: Ensure namespace exists
+      - name: Create namespace if not exists
+        run: |
+          kubectl get namespace prod || kubectl create namespace prod
+
+      # Step 9: Deploy with Helm
       - name: Deploy with Helm
         run: |
           helm upgrade --install user-service ./charts/user-service \
             -f charts/user-service/values.yaml \
             -f secrets/user-service.values.prod.yaml \
+            --namespace prod \
             --wait \
             --timeout 5m
       
-      # Step 9: Verify deployment
+      # Step 10: Verify deployment
       - name: Verify deployment
         run: |
-          kubectl rollout status deployment/user-service -n default --timeout=5m
-          kubectl get pods -l app.kubernetes.io/instance=user-service
+          kubectl rollout status deployment/user-service -n prod --timeout=5m
+          kubectl get pods -n prod -l app.kubernetes.io/instance=user-service
