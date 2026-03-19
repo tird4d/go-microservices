@@ -3,8 +3,8 @@ package handlers
 
 import (
 	"context"
-	"log"
 
+	"github.com/tird4d/go-microservices/auth_service/logger"
 	authpb "github.com/tird4d/go-microservices/auth_service/proto"
 	"github.com/tird4d/go-microservices/auth_service/services"
 	"github.com/tird4d/go-microservices/auth_service/utils"
@@ -19,13 +19,13 @@ type AuthServer struct {
 }
 
 func (s *AuthServer) Login(ctx context.Context, req *authpb.LoginRequest) (*authpb.LoginResponse, error) {
-	log.Printf("📥 Login called for email: %s and pass is: %s", req.Email, req.Password)
+	logger.Log.Infof("📥 Login called for email: %s and pass is: %s", req.Email, req.Password)
 
 	token, refreshToken, err := services.LoginUser(ctx, s.UserClient, req.Email, req.Password)
 
 	message := "Login successful"
 	if err != nil {
-		log.Printf("❌ Login failed: %v", err)
+		logger.Log.Infof("❌ Login failed: %v", err)
 		message = err.Error()
 	}
 
@@ -37,7 +37,7 @@ func (s *AuthServer) Login(ctx context.Context, req *authpb.LoginRequest) (*auth
 }
 
 func (s *AuthServer) Validate(ctx context.Context, req *authpb.ValidateRequest) (*authpb.ValidateResponse, error) {
-	log.Printf("🔐 Validate called with token: %s", req.Token)
+	logger.Log.Infof("🔐 Validate called with token: %s", req.Token)
 
 	claims, err := utils.ValidateJWT(req.Token)
 	if err != nil {
@@ -64,7 +64,7 @@ func (s *AuthServer) ValidateRefreshToken(ctx context.Context, req *authpb.Valid
 
 	accessToken, RefreshToken, err := services.ValidateRefreshToken(ctx, s.UserClient, req.RefreshToken)
 	if err != nil {
-		log.Printf("❌ Refresh token validation failed: %v", err)
+		logger.Log.Infof("❌ Refresh token validation failed: %v", err)
 		return nil, status.Error(codes.Unauthenticated, "Invalid refresh token")
 	}
 
@@ -75,14 +75,14 @@ func (s *AuthServer) ValidateRefreshToken(ctx context.Context, req *authpb.Valid
 }
 
 func (s *AuthServer) Logout(ctx context.Context, req *authpb.LogoutRequest) (*authpb.LogoutResponse, error) {
-	log.Printf("🔐 Logout called with token: %s", req.RefreshToken)
+	logger.Log.Infof("🔐 Logout called with token: %s", req.RefreshToken)
 
 	err := services.DeleteRefreshToken(ctx, req.RefreshToken)
 	if err != nil {
 		if status.Code(err) == codes.Unauthenticated {
 			return nil, status.Error(codes.Unauthenticated, "Invalid or expired refresh token")
 		}
-		log.Printf("❌ Logout failed: %v", err)
+		logger.Log.Infof("❌ Logout failed: %v", err)
 		return nil, status.Error(codes.Internal, "Failed to logout")
 	}
 

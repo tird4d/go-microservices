@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func CreateProduct(ctx context.Context, repo *repositories.MongoProductRepository, name, description, category, imageUrl string, price float64, stock int32) (*models.Product, error) {
+func CreateProduct(ctx context.Context, repo repositories.ProductRepository, name, description, category, imageUrl string, price float64, stock int32) (*models.Product, error) {
 
 	product := models.Product{
 		Name:        name,
@@ -42,7 +42,7 @@ func CreateProduct(ctx context.Context, repo *repositories.MongoProductRepositor
 	return createdProduct, nil
 }
 
-func GetProductByID(ctx context.Context, repo *repositories.MongoProductRepository, id string) (*models.Product, error) {
+func GetProductByID(ctx context.Context, repo repositories.ProductRepository, id string) (*models.Product, error) {
 	// Convert string ID to MongoDB ObjectID type
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -67,7 +67,7 @@ func GetProductByID(ctx context.Context, repo *repositories.MongoProductReposito
 
 // UpdateProduct updates an existing product
 // NOTE: UpdatedAt timestamp is set automatically in repository layer
-func UpdateProduct(ctx context.Context, repo *repositories.MongoProductRepository, id, name, description, category, imageUrl string, price float64, stock int32) (*models.Product, error) {
+func UpdateProduct(ctx context.Context, repo repositories.ProductRepository, id, name, description, category, imageUrl string, price float64, stock int32) (*models.Product, error) {
 	// Convert string ID to ObjectID
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -106,7 +106,7 @@ func UpdateProduct(ctx context.Context, repo *repositories.MongoProductRepositor
 }
 
 // DeleteProduct removes a product from the database
-func DeleteProduct(ctx context.Context, repo *repositories.MongoProductRepository, id string) error {
+func DeleteProduct(ctx context.Context, repo repositories.ProductRepository, id string) error {
 	// Convert string ID to ObjectID
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -131,7 +131,7 @@ func DeleteProduct(ctx context.Context, repo *repositories.MongoProductRepositor
 // ListProducts retrieves all products with pagination
 // PAGINATION PATTERN: skip = (page - 1) × pageSize
 // Example: page=2, pageSize=10 → skip first 10, return next 10
-func ListProducts(ctx context.Context, repo *repositories.MongoProductRepository, page, pageSize int32) ([]*models.Product, int64, error) {
+func ListProducts(ctx context.Context, repo repositories.ProductRepository, page, pageSize int32) ([]*models.Product, int64, error) {
 	// Set defaults for pagination
 	if page < 1 {
 		page = 1
@@ -170,7 +170,7 @@ func ListProducts(ctx context.Context, repo *repositories.MongoProductRepository
 
 // GetProductsByCategory retrieves products filtered by category with pagination
 // SAME PAGINATION PATTERN as ListProducts, but with category filter
-func GetProductsByCategory(ctx context.Context, repo *repositories.MongoProductRepository, category string, page, pageSize int32) ([]*models.Product, int64, error) {
+func GetProductsByCategory(ctx context.Context, repo repositories.ProductRepository, category string, page, pageSize int32) ([]*models.Product, int64, error) {
 	// Set defaults
 	if page < 1 {
 		page = 1

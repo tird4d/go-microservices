@@ -314,6 +314,7 @@ func TestDeleteUser_Success(t *testing.T) {
 	mockRepo := new(mocks.UserRepositoryMock)
 	id := primitive.NewObjectID()
 
+	mockRepo.On("FindUserByID", mock.Anything, mock.Anything).Return(&models.User{ID: id}, nil)
 	mockRepo.On("DeleteUser", mock.Anything, mock.Anything).Return(&mongo.DeleteResult{DeletedCount: 1}, nil)
 
 	result, err := DeleteUser(ctx, mockRepo, id)
@@ -329,13 +330,12 @@ func TestDeleteUser_UserNotFound(t *testing.T) {
 	mockRepo := new(mocks.UserRepositoryMock)
 	id := primitive.NewObjectID()
 
-	mockRepo.On("DeleteUser", mock.Anything, mock.Anything).Return(&mongo.DeleteResult{DeletedCount: 0}, nil)
+	mockRepo.On("FindUserByID", mock.Anything, mock.Anything).Return(nil, mongo.ErrNoDocuments)
 
 	result, err := DeleteUser(ctx, mockRepo, id)
 	mockRepo.AssertExpectations(t)
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, int64(0), result.DeletedCount)
+	assert.Error(t, err)
+	assert.Nil(t, result)
 }
 func TestDeleteUser_Error(t *testing.T) {
 	//Context
@@ -344,6 +344,7 @@ func TestDeleteUser_Error(t *testing.T) {
 	mockRepo := new(mocks.UserRepositoryMock)
 	id := primitive.NewObjectID()
 
+	mockRepo.On("FindUserByID", mock.Anything, mock.Anything).Return(&models.User{ID: id}, nil)
 	mockRepo.On("DeleteUser", mock.Anything, mock.Anything).Return(nil, errors.New("database error"))
 
 	result, err := DeleteUser(ctx, mockRepo, id)

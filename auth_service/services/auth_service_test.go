@@ -24,9 +24,10 @@ import (
 
 func TestMain(m *testing.M) {
 	err := godotenv.Load("../.env")
+	logger.InitLogger(true)
 
 	if err != nil {
-		logger.Info("Error loading .env file")
+		logger.Log.Info("Error loading .env file")
 	}
 
 	//Create a redis client with in-memory database

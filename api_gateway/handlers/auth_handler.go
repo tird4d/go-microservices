@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	authpb "github.com/tird4d/go-microservices/auth_service/proto"
 
@@ -27,7 +29,9 @@ func (h *GatewayHandler) RefreshTokenHandler(c *gin.Context) {
 	}
 
 	// Validate the refresh token and make new one
-	res, err := h.AuthClient.ValidateRefreshToken(c, &authpb.ValidateRefreshTokenRequest{
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	res, err := h.AuthClient.ValidateRefreshToken(ctx, &authpb.ValidateRefreshTokenRequest{
 		RefreshToken: body.RefreshToken,
 	})
 
@@ -55,7 +59,9 @@ func (h *GatewayHandler) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	res, err := h.AuthClient.Login(c, &authpb.LoginRequest{
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	res, err := h.AuthClient.Login(ctx, &authpb.LoginRequest{
 		Email:    body.Email,
 		Password: body.Password,
 	})
@@ -83,7 +89,9 @@ func (h *GatewayHandler) LogoutHandler(c *gin.Context) {
 		return
 	}
 
-	_, err := h.AuthClient.Logout(c, &authpb.LogoutRequest{
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	_, err := h.AuthClient.Logout(ctx, &authpb.LogoutRequest{
 		RefreshToken: body.RefreshToken,
 	})
 

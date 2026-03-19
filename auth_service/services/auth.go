@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -20,7 +19,7 @@ func LoginUser(ctx context.Context, userClient userpb.UserServiceClient, email, 
 	res, err := userClient.GetUserCredential(ctx, &userpb.GetUserCredentialRequest{
 		Email: email,
 	})
-	log.Printf("🔍 User credential response: %v", res)
+	logger.Log.Infof("🔍 User credential response: %v", res)
 
 	if res, err = userServiceResponseHandler(res, err); err != nil {
 		return "", "", err
@@ -28,25 +27,26 @@ func LoginUser(ctx context.Context, userClient userpb.UserServiceClient, email, 
 
 	ok := utils.CheckPasswordHash(password, res.Password)
 	if !ok {
-		logger.Error("Invalid password: %v", err)
+		logger.Log.Errorw("Invalid password: %v", err)
+
 		return "", "", status.Errorf(codes.Unauthenticated, "invalid password")
 	}
 
 	oid, err := primitive.ObjectIDFromHex(res.Id)
 	if err != nil {
-		logger.Error("Invalid user ID: %v", err)
+		logger.Log.Errorw("Invalid user ID: %v", err)
 		return "", "", status.Errorf(codes.InvalidArgument, "invalid user ID")
 	}
 
 	token, err := utils.GenerateJWT(oid, res.Email, res.Role)
 	if err != nil {
-		logger.Error("Failed to generate JWT: %v", err)
+		logger.Log.Errorw("Failed to generate JWT: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to generate JWT")
 	}
 
 	refreshToken, err := createRefreshToken(ctx, res.Id)
 	if err != nil || refreshToken == "" {
-		logger.Error("Failed to create refresh token: %v", err)
+		logger.Log.Errorw("Failed to create refresh token: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to create refresh token")
 	}
 
@@ -65,7 +65,7 @@ func ValidateRefreshToken(ctx context.Context, userClient userpb.UserServiceClie
 	userID, err := config.RedisClient.Get(ctx, refreshToken).Result()
 
 	if err != nil || userID == "" {
-		log.Printf("❌ Failed to validate refresh token: %v", err.Error())
+		logger.Log.Infof("❌ Failed to validate refresh token: %v", err.Error())
 		return "", "", status.Errorf(codes.Unauthenticated, "invalid refresh token")
 	}
 
@@ -74,21 +74,21 @@ func ValidateRefreshToken(ctx context.Context, userClient userpb.UserServiceClie
 	})
 
 	if err != nil || user == nil || user.Id == "" {
-		log.Printf("❌ Failed to connect to user_service: %v", err.Error())
+		logger.Log.Infof("❌ Failed to connect to user_service: %v", err.Error())
 		return "", "", status.Errorf(codes.Unavailable, "cannot connect to user service")
 	}
 
 	// Convert userID to ObjectID
 	oid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		log.Printf("❌ Invalid user ID: %v", err)
+		logger.Log.Infof("❌ Invalid user ID: %v", err)
 		return "", "", status.Errorf(codes.InvalidArgument, "invalid user ID")
 	}
 
 	// Generate a new access token
 	token, err := utils.GenerateJWT(oid, user.Email, user.Role)
 	if err != nil {
-		log.Printf("❌ Failed to generate JWT: %v", err)
+		logger.Log.Infof("❌ Failed to generate JWT: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to generate JWT")
 	}
 
@@ -96,7 +96,7 @@ func ValidateRefreshToken(ctx context.Context, userClient userpb.UserServiceClie
 	newRefreshToken, err := createRefreshToken(ctx, userID)
 
 	if err != nil {
-		log.Printf("❌ Failed to store refresh token in Redis: %v", err)
+		logger.Log.Infof("❌ Failed to store refresh token in Redis: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to store refresh token")
 	}
 
@@ -107,11 +107,11 @@ func ValidateRefreshToken(ctx context.Context, userClient userpb.UserServiceClie
 	// Delete the old refresh token
 	err = DeleteRefreshToken(ctx, refreshToken)
 	if err != nil {
-		log.Printf("❌ Failed to delete old refresh token: %v", err)
+		logger.Log.Infof("❌ Failed to delete old refresh token: %v", err)
 		return "", "", status.Errorf(codes.Internal, "failed to delete old refresh token")
 	}
 
-	log.Printf("✅ New AccessToken and RefreshToken issued for user: %s", userID)
+	logger.Log.Infof("✅ New AccessToken and RefreshToken issued for user: %s", userID)
 
 	return token, newRefreshToken, nil
 }
@@ -131,12 +131,12 @@ func DeleteRefreshToken(ctx context.Context, refreshToken string) error {
 	ok, err := config.RedisClient.Exists(ctx, refreshToken).Result()
 
 	if err != nil {
-		log.Printf("❌ Failed to check if refresh token exists: %v", err)
+		logger.Log.Infof("❌ Failed to check if refresh token exists: %v", err)
 		return status.Errorf(codes.Internal, "failed to check if refresh token exists")
 	}
 
 	if ok == 0 {
-		log.Printf("❌ Refresh token not found in Redis")
+		logger.Log.Infof("❌ Refresh token not found in Redis")
 		return status.Errorf(codes.Unauthenticated, "invalid refresh token")
 	}
 
@@ -153,12 +153,12 @@ func userServiceResponseHandler(res *userpb.UserCredentialResponse, err error) (
 		if ok && st.Code() == codes.NotFound {
 			return nil, status.Error(codes.NotFound, "email not found")
 		}
-		logger.Error("Failed to connect to user_service: %v", err)
+		logger.Log.Errorw("Failed to connect to user_service: %v", err)
 		return nil, status.Error(codes.Unavailable, "cannot connect to user service")
 	}
 
 	if res == nil {
-		logger.Error("userService responded with nil")
+		logger.Log.Errorw("userService responded with nil")
 		return nil, status.Errorf(codes.Internal, "empty response from user service")
 	}
 

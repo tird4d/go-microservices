@@ -7,9 +7,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tird4d/go-microservices/user_service/logger"
-	"github.com/tird4d/go-microservices/user_service/metrics"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
 	"github.com/tird4d/go-microservices/user_service/repositories"
 	"github.com/tird4d/go-microservices/user_service/services"
@@ -23,35 +21,25 @@ type Server struct {
 }
 
 func (s *Server) Register(ctx context.Context, req *userpb.RegisterRequest) (*userpb.RegisterResponse, error) {
+	logger.Log.Info("Register request received", "email", req.GetEmail())
 
-	// Start the timer for request duration
-	timer := prometheus.NewTimer(metrics.RequestDurationHistogram.WithLabelValues("RegisterUser"))
-	defer timer.ObserveDuration()
-	// Increment the request counter for the RegisterUser endpoint
-	metrics.RequestCounter.WithLabelValues("RegisterUser").Inc()
+	// Validation
+	if req.GetEmail() == "" {
+		return nil, fmt.Errorf("email required")
+	}
 
-	logger.Log.Info("Received Register request", "request", req)
-
+	// Register user
 	repo := &repositories.MongoUserRepository{}
 	result, err := services.RegisterUser(ctx, repo, req.GetName(), req.GetEmail(), req.GetPassword(), req.GetRole())
 	if err != nil {
+		logger.Log.Error("Failed to register user", "error", err)
 		return nil, err
 	}
 
-	//Publish user registered event
-	// err = events.PublishUserRegisteredEvent(events.UserRegisteredEvent{
-	// 	UserID: result.InsertedID.(primitive.ObjectID).Hex(),
-	// 	Email:  req.GetEmail(),
-	// 	Name:   req.Name,
-	// })
-
-	// if err != nil {
-	// 	logger.Log.Error("Error publishing user registered event", "error", err)
-	// 	return nil, err
-	// }
+	userID := result.InsertedID.(primitive.ObjectID).Hex()
 
 	return &userpb.RegisterResponse{
-		Id:      result.InsertedID.(primitive.ObjectID).Hex(),
+		Id:      userID,
 		Message: "User registered successfully....",
 	}, nil
 }
@@ -97,7 +85,6 @@ func (s *Server) GetUserCredential(ctx context.Context, req *userpb.GetUserCrede
 }
 
 func (s *Server) GetAllUsers(ctx context.Context, req *userpb.GetAllUsersRequest) (*userpb.GetAllUsersResponse, error) {
-
 	page := req.GetPage()
 	if page < 1 {
 		page = 1
@@ -108,13 +95,12 @@ func (s *Server) GetAllUsers(ctx context.Context, req *userpb.GetAllUsersRequest
 	}
 
 	repo := &repositories.MongoUserRepository{}
-
 	users, totalCount, err := services.GetAllUsers(ctx, repo, page, pageSize)
 	if err != nil {
+		logger.Log.Error("Failed to get users", "error", err)
 		return nil, status.Errorf(codes.Internal, "Failed to retrieve users")
 	}
 
-	// protoUsers := make([]*userpb.UserResponse, 0, len(users))
 	protoUsers := []*userpb.UserResponse{}
 	for _, user := range users {
 		protoUsers = append(protoUsers, &userpb.UserResponse{

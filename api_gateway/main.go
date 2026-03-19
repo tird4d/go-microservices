@@ -9,24 +9,51 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/tird4d/go-microservices/api_gateway/handlers"
+	"github.com/tird4d/go-microservices/api_gateway/interceptors"
+	"github.com/tird4d/go-microservices/api_gateway/logger"
 	"github.com/tird4d/go-microservices/api_gateway/middlewares"
+	"github.com/tird4d/go-microservices/api_gateway/tracing"
 	authpb "github.com/tird4d/go-microservices/auth_service/proto"
+	productpb "github.com/tird4d/go-microservices/product_service/proto"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
+	logger.InitLogger(true)
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Error loading .env file, using default values")
 	}
 
+	// Initialize tracing
+	jaegerEndpoint := os.Getenv("JAEGER_ENDPOINT")
+	if jaegerEndpoint == "" {
+		jaegerEndpoint = "jaeger:4317" // Default for docker-compose
+	}
+
+
+	tp, err := tracing.InitTracer("api-gateway", jaegerEndpoint)
+	if err != nil {
+		logger.Log.Errorw("❌ Failed to initialize tracer", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := tracing.Shutdown(tp); err != nil {
+			logger.Log.Errorw("❌ Failed to shutdown tracer", "error", err)
+		}
+	}()
+	logger.Log.Infow("✅ Tracing initialized", "endpoint", jaegerEndpoint)
+
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Connecting to gRPC server for user service
-	conn, err := grpc.DialContext(ctx, os.Getenv("USER_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, os.Getenv("USER_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(interceptors.UnaryClientInterceptor))
 	if err != nil {
 		log.Fatalf("❌ could not connect to gRPC server: %v", err)
 	}
@@ -35,7 +62,7 @@ func main() {
 	userClient := userpb.NewUserServiceClient(conn)
 
 	// Connecting to gRPC server for auth service
-	authConn, err := grpc.DialContext(ctx, os.Getenv("AUTH_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authConn, err := grpc.DialContext(ctx, os.Getenv("AUTH_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(interceptors.UnaryClientInterceptor))
 	if err != nil {
 		log.Fatalf("❌ could not connect to auth gRPC server: %v", err)
 	}
@@ -43,8 +70,20 @@ func main() {
 
 	authClient := authpb.NewAuthServiceClient(authConn)
 
+
+	productConn, err := grpc.DialContext(ctx, os.Getenv("PRODUCT_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(interceptors.UnaryClientInterceptor))
+	if err != nil {
+		log.Fatalf("❌ could not connect to auth gRPC server: %v", err)
+	}
+
+		productClient := productpb.NewProductServiceClient(productConn)
+
+
 	// ایجاد روت‌ها
 	router := gin.Default()
+
+	// Add tracing middleware for all requests
+	router.Use(middlewares.TracingMiddleware())
 
 	userHandler := handlers.UserHandler{
 		UserClient: userClient,
@@ -57,6 +96,12 @@ func main() {
 	adminHandler := handlers.AdminHandler{
 		UserClient: userClient,
 	}
+
+	adminProductHandler := handlers.ProductHandler{
+		ProductClient: productClient,
+	}
+
+
 
 	router.GET("/healthz", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -81,7 +126,13 @@ func main() {
 	admin.PUT("/users/:user_id", adminHandler.UpdateUserHandler)
 	admin.DELETE("/users/:user_id", adminHandler.DeleteHandler)
 
-	admin.POST("/product")
+	// Product routes (admin only)
+	admin.POST("/products", adminProductHandler.CreateHandler)
+	admin.GET("/products", adminProductHandler.ListProductsHandler)
+	admin.GET("/products/:id", adminProductHandler.GetProductHandler)
+	admin.PUT("/products/:id", adminProductHandler.UpdateProductHandler)
+	admin.DELETE("/products/:id", adminProductHandler.DeleteProductHandler)
+	admin.GET("/products/category/:category", adminProductHandler.GetProductsByCategoryHandler)
 
 	log.Println("🚀 API Gateway is running on http://localhost:8080")
 	router.Run(":8080")
