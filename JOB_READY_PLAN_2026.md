@@ -61,12 +61,19 @@
 - [ ] Add results to portfolio (graphs, metrics)
 
 #### Week 7-8: CI/CD Pipeline (40h)
-- [ ] Set up GitHub Actions workflows
+- [x] Set up GitHub Actions workflow for user-service ✅
+- [ ] Set up GitHub Actions workflow for auth-service
+- [ ] Set up GitHub Actions workflow for product-service
+- [ ] Set up GitHub Actions workflow for api-gateway
 - [ ] Automate tests on PR
-- [ ] Build Docker images on merge
-- [ ] Push to Amazon ECR
 - [ ] Add security scanning (Trivy)
-- [ ] Document CI/CD flow
+- [ ] **Security Hardening (after all workflows done):**
+  - [ ] Replace static AWS keys with GitHub OIDC (no more AWS_ACCESS_KEY_ID in GitHub Secrets)
+  - [ ] Add External Secrets Operator — sync secrets from AWS Secrets Manager into K8s automatically
+  - [ ] Migrate service secrets to AWS Secrets Manager  - [ ] **Go Workspace refactor (go.work):**
+    - [ ] Replace all `replace` directives in go.mod files with a single `go.work` file in repo root
+    - [ ] Update all Dockerfiles to use simpler build context (no more `-f service/Dockerfile .` needed)
+    - [ ] Cleaner monorepo module management across all services- [ ] Document CI/CD flow
 
 **Deliverable:** Fully tested microservices with observability basics ✅ (Tests & Tracing DONE!)
 
