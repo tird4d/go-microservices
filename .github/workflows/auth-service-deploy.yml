@@ -1,0 +1,96 @@
+
+name: Build and Deploy Auth Service to EKS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'auth_service/**'  # Only trigger if auth_service code changed
+      - 'charts/auth-service/**'
+      - '.github/workflows/auth-service-deploy.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Get the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      # Step 2: Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+      
+      # Step 3: Login to ECR
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region eu-central-1 | \
+          docker login --username AWS --password-stdin 114851843413.dkr.ecr.eu-central-1.amazonaws.com
+      
+      # Step 4: Build Docker image
+      - name: Build Docker image
+        run: |
+          cd auth_service
+          docker build -t 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:${{ github.sha }} .
+          docker tag 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:${{ github.sha }} \
+                     114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:latest
+      
+      # Step 5: Push to ECR
+      - name: Push to Amazon ECR
+        run: |
+          docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:${{ github.sha }}
+          docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:latest
+      
+      # Step 6: Update kubeconfig
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region eu-central-1 \
+            --name go-microservices
+      
+      # Step 7: Reconstruct secrets file from GitHub Actions Secrets
+      # The secrets/ directory is gitignored - we build it on the fly here
+      - name: Create secrets file
+        env:
+          MONGO_URI: ${{ secrets.AUTH_SERVICE_MONGO_URI }}
+          JWT_SECRET: ${{ secrets.AUTH_SERVICE_JWT_SECRET }}
+          RABBITMQ_URI: ${{ secrets.AUTH_SERVICE_RABBITMQ_URI }}
+          REDIS_ADDR: ${{ secrets.AUTH_SERVICE_REDIS_ADDR }}
+          REDIS_TLS: ${{ secrets.AUTH_SERVICE_REDIS_TLS }}
+        run: |
+          mkdir -p secrets
+          cat <<EOF > secrets/auth-service.values.prod.yaml
+          secrets:
+            mongoUri: "${MONGO_URI}"
+            jwtSecret: "${JWT_SECRET}"
+            rabbitmqUri: "${RABBITMQ_URI}"
+            redisAddr: "${REDIS_ADDR}"
+            userServiceAddr: "user-service.prod.svc.cluster.local:50051"
+            redisTls: "${REDIS_TLS}"
+          EOF
+
+      # Step 8: Ensure namespace exists
+      - name: Create namespace if not exists
+        run: |
+          kubectl get namespace prod || kubectl create namespace prod
+
+      # Step 9: Deploy with Helm
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install auth-service ./charts/auth-service \
+            -f charts/auth-service/values.yaml \
+            -f secrets/auth-service.values.prod.yaml \
+            --namespace prod \
+            --atomic \
+            --timeout 5m
+      
+      # Step 10: Verify deployment
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/auth-service -n prod --timeout=5m
+          kubectl get pods -n prod -l app.kubernetes.io/instance=auth-service
