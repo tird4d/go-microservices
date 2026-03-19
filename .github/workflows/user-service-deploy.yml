@@ -53,16 +53,28 @@ jobs:
             --region eu-central-1 \
             --name go-microservices
       
-      # Step 7: Deploy with Helm
+      # Step 7: Reconstruct secrets file from GitHub Actions Secrets
+      # The secrets/ directory is gitignored - we build it on the fly here
+      - name: Create secrets file
+        env:
+          MONGO_URI: ${{ secrets.USER_SERVICE_MONGO_URI }}
+        run: |
+          mkdir -p secrets
+          cat <<EOF > secrets/user-service.values.prod.yaml
+          secrets:
+            mongoUri: "${MONGO_URI}"
+          EOF
+
+      # Step 8: Deploy with Helm
       - name: Deploy with Helm
         run: |
           helm upgrade --install user-service ./charts/user-service \
             -f charts/user-service/values.yaml \
-            -f secrets/user-service.values.local.yaml \
+            -f secrets/user-service.values.prod.yaml \
             --wait \
             --timeout 5m
       
-      # Step 8: Verify deployment
+      # Step 9: Verify deployment
       - name: Verify deployment
         run: |
           kubectl rollout status deployment/user-service -n default --timeout=5m
