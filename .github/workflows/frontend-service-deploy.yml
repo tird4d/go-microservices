@@ -1,0 +1,79 @@
+
+name: Build and Deploy Frontend Service to EKS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend_service/**'
+      - 'charts/frontend-service/**'
+      - '.github/workflows/frontend-service-deploy.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Get the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      # Step 3: Login to ECR
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region eu-central-1 | \
+          docker login --username AWS --password-stdin 114851843413.dkr.ecr.eu-central-1.amazonaws.com
+
+      # Step 4: Build Docker image
+      # frontend_service builds standalone — context is just its own directory
+      - name: Build Docker image
+        run: |
+          docker build -f frontend_service/Dockerfile \
+            -t 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/frontend-service:${{ github.sha }} \
+            frontend_service/
+          docker tag \
+            114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/frontend-service:${{ github.sha }} \
+            114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/frontend-service:latest
+
+      # Step 5: Push to ECR
+      - name: Push to Amazon ECR
+        run: |
+          docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/frontend-service:${{ github.sha }}
+          docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/frontend-service:latest
+
+      # Step 6: Update kubeconfig
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region eu-central-1 \
+            --name go-microservices
+
+      # Step 7: Ensure namespace exists
+      - name: Create namespace if not exists
+        run: |
+          kubectl get namespace prod || kubectl create namespace prod
+
+      # Step 8: Deploy with Helm
+      # frontend has no secrets — nginx config is injected via ConfigMap in the chart
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install frontend-service ./charts/frontend-service \
+            -f charts/frontend-service/values.yaml \
+            --set image.tag=${{ github.sha }} \
+            --namespace prod \
+            --atomic \
+            --timeout 5m
+
+      # Step 9: Verify deployment
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/frontend-service -n prod --timeout=5m
+          kubectl get pods -n prod -l app.kubernetes.io/instance=frontend-service

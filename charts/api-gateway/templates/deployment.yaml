@@ -45,6 +45,10 @@ spec:
               value: {{ .Values.env.userServiceAddr | quote }}
             - name: AUTH_SERVICE_ADDR
               value: {{ .Values.env.authServiceAddr | quote }}
+            - name: PRODUCT_SERVICE_ADDR
+              value: {{ .Values.env.productServiceAddr | quote }}
+            - name: JAEGER_ENDPOINT
+              value: {{ .Values.env.jaegerEndpoint | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

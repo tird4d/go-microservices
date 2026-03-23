@@ -76,8 +76,9 @@ jobs:
           helm upgrade --install user-service ./charts/user-service \
             -f charts/user-service/values.yaml \
             -f secrets/user-service.values.prod.yaml \
+            --set image.tag=${{ github.sha }} \
             --namespace prod \
-            --wait \
+            --atomic \
             --timeout 5m
       
       # Step 10: Verify deployment

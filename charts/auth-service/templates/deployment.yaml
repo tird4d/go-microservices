@@ -52,6 +52,8 @@ spec:
               value: {{ .Values.env.port | quote }}
             - name: MONGO_DB
               value: {{ .Values.env.mongoDb | quote }}
+            - name: JAEGER_ENDPOINT
+              value: {{ .Values.env.jaegerEndpoint | quote }}
 
           livenessProbe:
             tcpSocket:
