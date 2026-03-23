@@ -57,21 +57,18 @@ jobs:
       # The secrets/ directory is gitignored - we build it on the fly here
       - name: Create secrets file
         env:
-          MONGO_URI: ${{ secrets.AUTH_SERVICE_MONGO_URI }}
-          JWT_SECRET: ${{ secrets.AUTH_SERVICE_JWT_SECRET }}
-          RABBITMQ_URI: ${{ secrets.AUTH_SERVICE_RABBITMQ_URI }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_ADDR: ${{ secrets.AUTH_SERVICE_REDIS_ADDR }}
-          REDIS_TLS: ${{ secrets.AUTH_SERVICE_REDIS_TLS }}
         run: |
           mkdir -p secrets
           cat <<EOF > secrets/auth-service.values.prod.yaml
           secrets:
             mongoUri: "${MONGO_URI}"
             jwtSecret: "${JWT_SECRET}"
-            rabbitmqUri: "${RABBITMQ_URI}"
             redisAddr: "${REDIS_ADDR}"
             userServiceAddr: "user-service.prod.svc.cluster.local:50051"
-            redisTls: "${REDIS_TLS}"
+            redisTls: "true"
           EOF
 
       # Step 8: Ensure namespace exists

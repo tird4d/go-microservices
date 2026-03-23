@@ -57,7 +57,7 @@ jobs:
       # The secrets/ directory is gitignored - we build it on the fly here
       - name: Create secrets file
         env:
-          MONGO_URI: ${{ secrets.USER_SERVICE_MONGO_URI }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
           mkdir -p secrets
           cat <<EOF > secrets/user-service.values.prod.yaml
