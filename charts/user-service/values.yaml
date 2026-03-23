@@ -72,3 +72,4 @@ affinity: {}
 env:
   port: "50051"
   mongoDb: "gomicrodb"
+  jaegerEndpoint: "jaeger:4317"

@@ -61,43 +61,49 @@
 - [ ] Add results to portfolio (graphs, metrics)
 
 #### Week 7-8: CI/CD Pipeline (40h)
-- [ ] Set up GitHub Actions workflows
+- [x] Set up GitHub Actions workflow for user-service ✅
+- [ ] Set up GitHub Actions workflow for auth-service
+- [ ] Set up GitHub Actions workflow for product-service
+- [ ] Set up GitHub Actions workflow for api-gateway
 - [ ] Automate tests on PR
-- [ ] Build Docker images on merge
-- [ ] Push to Amazon ECR
 - [ ] Add security scanning (Trivy)
-- [ ] Document CI/CD flow
+- [ ] **Security Hardening (after all workflows done):**
+  - [ ] Replace static AWS keys with GitHub OIDC (no more AWS_ACCESS_KEY_ID in GitHub Secrets)
+  - [ ] Add External Secrets Operator — sync secrets from AWS Secrets Manager into K8s automatically
+  - [ ] Migrate service secrets to AWS Secrets Manager  - [ ] **Go Workspace refactor (go.work):**
+    - [ ] Replace all `replace` directives in go.mod files with a single `go.work` file in repo root
+    - [ ] Update all Dockerfiles to use simpler build context (no more `-f service/Dockerfile .` needed)
+    - [ ] Cleaner monorepo module management across all services- [ ] Document CI/CD flow
 
 **Deliverable:** Fully tested microservices with observability basics ✅ (Tests & Tracing DONE!)
 
 ---
 
-### 📅 **Month 3: Kubernetes Deployment** (April 2026)
+### 📅 **Month 3: Kubernetes Deployment** (April 2026) 🔄 AHEAD OF SCHEDULE
 **Focus:** Deploy entire stack to EKS  
 **Hours:** 80 total  
 **German:** B1+ → B2 preparation
 
-#### Week 1-2: Helm Charts (40h)
-- [ ] Create Helm chart for user-service
-- [ ] Create Helm chart for auth-service
-- [ ] Create Helm chart for product-service
-- [ ] Create Helm chart for api-gateway
-- [ ] Create Helm chart for email-service
-- [ ] Add MongoDB StatefulSet
-- [ ] Add Redis deployment
-- [ ] Add RabbitMQ deployment
-- [ ] Test locally with Minikube
+#### Week 1-2: Helm Charts (40h) ✅ DONE
+- [x] Create Helm chart for user-service
+- [x] Create Helm chart for auth-service
+- [x] Create Helm chart for product-service
+- [x] Create Helm chart for api-gateway
+- [x] Create Helm chart for email-service
+- [x] MongoDB → Using Atlas (managed, no StatefulSet needed)
+- [x] Redis → Using AWS ElastiCache (managed)
+- [x] RabbitMQ → Deployed in cluster
 - [ ] Document chart structure
 
-#### Week 3-4: EKS Deployment (40h)
-- [ ] Deploy all Helm charts to existing EKS cluster
-- [ ] Configure persistent volumes for databases
+#### Week 3-4: EKS Deployment (40h) 🔄 IN PROGRESS
+- [x] EKS cluster created with eksctl
+- [x] Deploy user-service to EKS (prod namespace) ✅
+- [x] Deploy auth-service to EKS (prod namespace) ✅
+- [ ] Deploy product-service to EKS
+- [ ] Deploy api-gateway to EKS
 - [ ] Set up Ingress Controller (nginx-ingress)
 - [ ] Configure external LoadBalancer
-- [ ] Test service-to-service communication
-- [ ] Verify gRPC calls work in K8s
-- [ ] Add ConfigMaps for environment configs
-- [ ] Use Kubernetes Secrets for sensitive data
+- [ ] Verify gRPC calls work between services in K8s
 - [ ] Test pod restart and recovery
 - [ ] Document deployment process
 
@@ -327,8 +333,8 @@
 
 | Month | Milestone | Success Metric | Status |
 |-------|-----------|----------------|--------|
-| 2 | Core features complete | All services tested, CI/CD working | 🔄 In Progress (Tests ✅, Tracing ✅) |
-| 3 | EKS deployment live | Can demo live system with HTTPS | ⏳ Next |
+| 2 | Core features complete | All services tested, CI/CD working | 🔄 In Progress (Tests ✅, Tracing ✅, CI/CD 2/4 ✅) |
+| 3 | EKS deployment live | Can demo live system with HTTPS | 🔄 In Progress (Cluster ✅, user+auth deployed ✅) |
 | 4 | Production monitoring | Grafana dashboards + alerts working | ⏳ Next |
 | 5 | Portfolio project live | TirFramework demo publicly accessible | ⏳ Next |
 | 7 | Second Go project done | Different pattern implemented | ⏳ Future |

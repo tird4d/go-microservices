@@ -26,7 +26,11 @@ func main() {
 	}
 
 	// Initialize Jaeger tracing
-	tp, err := tracing.InitTracer("product-service", "jaeger:4317")
+	jaegerEndpoint := os.Getenv("JAEGER_ENDPOINT")
+	if jaegerEndpoint == "" {
+		jaegerEndpoint = "jaeger:4317" // Default for docker-compose
+	}
+	tp, err := tracing.InitTracer("product-service", jaegerEndpoint)
 	if err != nil {
 		logger.Log.Errorw("❌ Failed to initialize tracer", "error", err)
 		os.Exit(1)

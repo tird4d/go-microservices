@@ -57,7 +57,7 @@ jobs:
       # The secrets/ directory is gitignored - we build it on the fly here
       - name: Create secrets file
         env:
-          MONGO_URI: ${{ secrets.USER_SERVICE_MONGO_URI }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
           mkdir -p secrets
           cat <<EOF > secrets/user-service.values.prod.yaml
@@ -76,8 +76,9 @@ jobs:
           helm upgrade --install user-service ./charts/user-service \
             -f charts/user-service/values.yaml \
             -f secrets/user-service.values.prod.yaml \
+            --set image.tag=${{ github.sha }} \
             --namespace prod \
-            --wait \
+            --atomic \
             --timeout 5m
       
       # Step 10: Verify deployment
