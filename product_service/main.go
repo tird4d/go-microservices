@@ -14,6 +14,8 @@ import (
 	"github.com/tird4d/go-microservices/product_service/tracing"
 
 	"google.golang.org/grpc"
+	health "google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func main() {
@@ -51,13 +53,13 @@ func main() {
 	productpb.RegisterProductServiceServer(grpcServer, &handlers.Server{})
 
 	// ✅ Health Check setup
-	// healthServer := health.NewServer()
+	healthServer := health.NewServer()
 	// // Set the health status for the main service
-	// healthServer.SetServingStatus("user.UserService", healthpb.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("product.ProductService", healthpb.HealthCheckResponse_SERVING)
 	// // وضعیت کل سرور gRPC
-	// healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 	// // ثبت health server روی gRPC
-	// healthpb.RegisterHealthServer(grpcServer, healthServer)
+	healthpb.RegisterHealthServer(grpcServer, healthServer)
 
 	logger.Log.Infow("َ✅ gRPC server is running on port", "port", 50053)
 
