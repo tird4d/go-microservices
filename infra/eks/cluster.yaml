@@ -4,21 +4,21 @@ kind: ClusterConfig
 metadata:
   name: go-microservices
   region: eu-central-1
-  version: "1.29"
+  version: "1.35"
 
 vpc:
-  id: "vpc-024ed9aaf851441f1"
+  id: "vpc-04f534c012342639b"
   subnets:
     private:
       eu-central-1a:
-        id: "subnet-07cd9eef3013166e9"
+        id: "subnet-0b39069ec80a76510"
       eu-central-1b:
-        id: "subnet-0c2d8e899e0af4a39"
+        id: "subnet-013c47ce9af92ae35"
     public:
       eu-central-1a:
-        id: "subnet-011ec8236a32db47d"
+        id: "subnet-03f95515e3f65bd2a"
       eu-central-1b:
-        id: "subnet-0594e301296029a2a"
+        id: "subnet-0fe573c19c254c327"
 
 managedNodeGroups:
   - name: ng-1
