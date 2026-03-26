@@ -60,11 +60,12 @@
 - [ ] Document performance benchmarks
 - [ ] Add results to portfolio (graphs, metrics)
 
-#### Week 7-8: CI/CD Pipeline (40h)
+#### Week 7-8: CI/CD Pipeline (40h) ✅ DONE
 - [x] Set up GitHub Actions workflow for user-service ✅
-- [ ] Set up GitHub Actions workflow for auth-service
-- [ ] Set up GitHub Actions workflow for product-service
-- [ ] Set up GitHub Actions workflow for api-gateway
+- [x] Set up GitHub Actions workflow for auth-service ✅
+- [x] Set up GitHub Actions workflow for product-service ✅
+- [x] Set up GitHub Actions workflow for api-gateway ✅
+- [x] Set up GitHub Actions workflow for frontend-service ✅
 - [ ] Automate tests on PR
 - [ ] Add security scanning (Trivy)
 - [ ] **Security Hardening (after all workflows done):**
@@ -79,7 +80,7 @@
 
 ---
 
-### 📅 **Month 3: Kubernetes Deployment** (April 2026) 🔄 AHEAD OF SCHEDULE
+### 📅 **Month 3: Kubernetes Deployment** ✅ COMPLETED (March 2026 — 1 month ahead of schedule)
 **Focus:** Deploy entire stack to EKS  
 **Hours:** 80 total  
 **German:** B1+ → B2 preparation
@@ -90,24 +91,29 @@
 - [x] Create Helm chart for product-service
 - [x] Create Helm chart for api-gateway
 - [x] Create Helm chart for email-service
+- [x] Create Helm chart for frontend-service
 - [x] MongoDB → Using Atlas (managed, no StatefulSet needed)
 - [x] Redis → Using AWS ElastiCache (managed)
 - [x] RabbitMQ → Deployed in cluster
-- [ ] Document chart structure
+- [x] Document chart structure (see docs/eks_deployment_guide_go_microservice.md)
 
-#### Week 3-4: EKS Deployment (40h) 🔄 IN PROGRESS
-- [x] EKS cluster created with eksctl
+#### Week 3-4: EKS Deployment (40h) ✅ DONE
+- [x] EKS cluster created with eksctl (on top of Terraform VPC)
 - [x] Deploy user-service to EKS (prod namespace) ✅
 - [x] Deploy auth-service to EKS (prod namespace) ✅
-- [ ] Deploy product-service to EKS
-- [ ] Deploy api-gateway to EKS
-- [ ] Set up Ingress Controller (nginx-ingress)
-- [ ] Configure external LoadBalancer
-- [ ] Verify gRPC calls work between services in K8s
-- [ ] Test pod restart and recovery
-- [ ] Document deployment process
+- [x] Deploy product-service to EKS (prod namespace) ✅
+- [x] Deploy api-gateway to EKS (prod namespace) ✅
+- [x] Deploy frontend-service to EKS (prod namespace) ✅
+- [x] Set up Ingress Controller (ingress-nginx via Helm)
+- [x] Configure external LoadBalancer (AWS ELB auto-provisioned by Cloud Controller Manager)
+- [x] Verify gRPC calls work between services in K8s ✅ (POST /api/v1/register → HTTP 200 end-to-end)
+- [x] Ingress rules managed by Helm charts (not manual kubectl) ✅
+- [x] Stuck Helm release protection in all 5 CI/CD workflows ✅
+- [x] No imagePullSecrets needed — node IAM role has ECR read access ✅
+- [x] Pod restart and recovery — validated through real deployments (CrashLoopBackOff → fixed → auto-recovered) ✅
+- [x] Document deployment process (docs/eks_deployment_guide_go_microservice.md + infra/lb/README.md)
 
-**Deliverable:** All services running on AWS EKS
+**Deliverable:** ✅ All 5 services running on AWS EKS, CI/CD fully automated, public URL verified
 
 ---
 
@@ -130,16 +136,20 @@
 - [ ] Create alert rules (high latency, pod crashes, etc.)
 - [ ] Test alert delivery (email/Slack)
 
-#### Week 3-4: Domain & TLS (40h)
+#### Week 3-4: Domain, TLS & Autoscaling (40h)
 - [ ] Register domain (e.g., go-microservices.dev - ~€10/year)
 - [ ] Configure Route53 DNS
 - [ ] Install cert-manager in K8s
 - [ ] Configure Let's Encrypt for TLS
 - [ ] Update Ingress with TLS config
 - [ ] Test HTTPS access
-- [ ] Add Horizontal Pod Autoscaler (HPA)
-- [ ] Load test and verify autoscaling works
+- [ ] Enable IRSA (IAM Roles for Service Accounts) on the cluster
+- [ ] Install **Cluster Autoscaler** (node-level scaling — scales EC2 nodes when pods are Pending)
+- [ ] Add **Horizontal Pod Autoscaler (HPA)** (pod-level scaling — scales replicas based on CPU/memory)
+- [ ] Load test and verify both autoscalers trigger correctly
 - [ ] Document production setup
+
+> **Note:** Cluster Autoscaler + HPA work as a pair. HPA adds pods when load increases; Cluster Autoscaler adds nodes when no node has capacity to schedule those pods. Without Cluster Autoscaler, pods just sit Pending forever (learned this the hard way in Month 3).
 
 **Deliverable:** Production-grade system with HTTPS and monitoring
 
@@ -209,6 +219,36 @@
 - [ ] Blog post: "Implementing Event Sourcing in Go"
 
 **Deliverable:** Second production-grade Go project demonstrating advanced patterns
+
+---
+
+### 📅 **Month 7.5: Certifications** (Sep 2026)
+**Focus:** Validate real-world K8s + AWS experience with industry-recognised certs  
+**Hours:** ~40h study total  
+**German:** B2 practice continues
+
+#### Current certifications ✅
+- [x] AZ-900 (Azure Fundamentals) — entry level
+- [x] AWS CCP (Cloud Practitioner) — entry level
+
+#### Target certifications (high ROI for Senior Backend Engineer in Germany)
+
+**Priority 1 — CKA (Certified Kubernetes Administrator)** — ~€395, 2h exam
+- [ ] Study: Kubernetes in Action book (already in reading list)
+- [ ] Practice: killer.sh CKA simulator (2 free attempts with exam purchase)
+- [ ] Key topics: RBAC, network policies, etcd backup, pod scheduling, upgrades
+- [ ] Schedule exam after Month 4 (real EKS experience = 80% of prep done)
+- [ ] Target: September 2026
+
+**Priority 2 — AWS SAA (Solutions Architect Associate)** — ~€300, 2h20m exam
+- [ ] Study: Stephane Maarek SAA course (Udemy, ~€15 on sale)
+- [ ] Key topics: VPC, EKS, IAM/IRSA, ElastiCache, Route53, ALB — all things you've built
+- [ ] Take after CKA: October 2026
+- [ ] Target: October 2026
+
+> **Why these two:** CKA proves you can administer a K8s cluster (not just use it). SAA proves you understand AWS architecture. Together they directly support every bullet point in your portfolio project. CKAD and AWS DevOps Professional can follow later — CKA + SAA is the highest-ROI pair for your target role.
+
+**Deliverable:** CKA + AWS SAA certified, resume upgraded from "entry-level cloud" to "certified K8s + AWS architect"
 
 ---
 
@@ -333,11 +373,12 @@
 
 | Month | Milestone | Success Metric | Status |
 |-------|-----------|----------------|--------|
-| 2 | Core features complete | All services tested, CI/CD working | 🔄 In Progress (Tests ✅, Tracing ✅, CI/CD 2/4 ✅) |
-| 3 | EKS deployment live | Can demo live system with HTTPS | 🔄 In Progress (Cluster ✅, user+auth deployed ✅) |
-| 4 | Production monitoring | Grafana dashboards + alerts working | ⏳ Next |
+| 2 | Core features complete | All services tested, CI/CD working | 🔄 In Progress (Tests ✅, Tracing ✅, CI/CD 5/5 ✅, Load tests ⏳) |
+| 3 | EKS deployment live | Can demo live system with HTTPS | ✅ DONE — all 5 services deployed, public URL verified, HTTP → HTTPS next |
+| 4 | Production monitoring + autoscaling | Grafana dashboards + alerts + HPA + Cluster Autoscaler + HTTPS | ⏳ Next |
 | 5 | Portfolio project live | TirFramework demo publicly accessible | ⏳ Next |
 | 7 | Second Go project done | Different pattern implemented | ⏳ Future |
+| 8 | CKA + AWS SAA certified | Both exams passed | ⏳ Future |
 | 9 | OSS contributions | 10+ merged PRs to known projects | ⏳ Future |
 | 10 | Interview ready | Can ace system design + coding rounds | ⏳ Future |
 | 12 | Job offer accepted | Contract signed for Feb/Mar 2027 start | 🎯 Goal |
