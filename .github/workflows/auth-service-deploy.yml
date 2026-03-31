@@ -31,9 +31,20 @@ jobs:
         run: |
           aws ecr get-login-password --region eu-central-1 | \
           docker login --username AWS --password-stdin 114851843413.dkr.ecr.eu-central-1.amazonaws.com
-      
-      # Step 4: Build Docker image
-      # auth_service Dockerfile uses COPY auth_service/ and COPY user_service/ — must build from repo root
+
+      # Step 4: Set up Go and run tests
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.6'
+
+      - name: Run tests
+        run: |
+          cd auth_service
+          go test ./... -v -race -coverprofile=coverage.out
+          go tool cover -func=coverage.out
+
+      # Step 5: Build Docker image
       - name: Build Docker image
         run: |
           docker build -f auth_service/Dockerfile \

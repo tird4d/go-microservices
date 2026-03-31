@@ -91,6 +91,6 @@ func main() {
 			log.Println("⚠️ Failed to parse message:", err)
 			continue
 		}
-		logger.Log.Infof("📨 New user registered! Sending welcome email to %s <%s>\n", event.Name, event.Email)
+			log.Printf("📨 New user registered! Sending welcome email to %s <%s>\n", event.Name, event.Email)
 	}
 }

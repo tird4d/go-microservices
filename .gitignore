@@ -25,8 +25,7 @@ coverage_report.html
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Go workspace file
-go.work
+# Go workspace file (go.work is committed, go.work.sum is not)
 go.work.sum
 
 # env file

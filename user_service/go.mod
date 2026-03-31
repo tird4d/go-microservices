@@ -1,6 +1,6 @@
 module github.com/tird4d/go-microservices/user_service
 
-go 1.24.2
+go 1.25.6
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
@@ -55,6 +55,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/tird4d/go-microservices/user_service/proto => ./proto
 
-replace github.com/tird4d/go-microservices/user_service/handlers => ./handlers

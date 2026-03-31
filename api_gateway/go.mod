@@ -7,8 +7,8 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.11.1
 	github.com/tird4d/go-microservices/auth_service v0.0.0-20250411152857-d3292ae0ee8d
-	github.com/tird4d/go-microservices/product_service v0.0.0-00010101000000-000000000000
-	github.com/tird4d/go-microservices/user_service v0.0.0-00010101000000-000000000000
+	github.com/tird4d/go-microservices/product_service v0.0.0
+	github.com/tird4d/go-microservices/user_service v0.0.0
 	go.opentelemetry.io/otel v1.40.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.40.0
 	go.opentelemetry.io/otel/sdk v1.40.0
@@ -60,8 +60,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/tird4d/go-microservices/user_service => ../user_service
 
-replace github.com/tird4d/go-microservices/auth_service => ../auth_service
-
-replace github.com/tird4d/go-microservices/product_service => ../product_service

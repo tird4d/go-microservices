@@ -1,9 +1,9 @@
 module github.com/tird4d/go-microservices/user_client
 
-go 1.24.2
+go 1.25.6
 
 require (
-	github.com/tird4d/go-microservices/user_service v0.0.0-00010101000000-000000000000
+	github.com/tird4d/go-microservices/user_service v0.0.0
 	google.golang.org/grpc v1.71.1
 )
 
@@ -15,4 +15,4 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 )
 
-replace github.com/tird4d/go-microservices/user_service => ../user_service
+

@@ -35,5 +35,5 @@ func main() {
 		log.Fatalf("❌ Register failed: %v", err)
 	}
 
-	logger.Log.Infof("✅ Response: ID=%s, Message=%s", res.Id, res.Message)
+	log.Printf("✅ Response: ID=%s, Message=%s", res.Id, res.Message)
 }

@@ -1,6 +1,6 @@
 module github.com/tird4d/go-microservices/auth_service
 
-go 1.24.2
+go 1.25.6
 
 require (
 	github.com/alicebob/miniredis/v2 v2.34.0
@@ -12,7 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/stretchr/testify v1.11.1
-	github.com/tird4d/go-microservices/user_service v0.0.0-00010101000000-000000000000
+	github.com/tird4d/go-microservices/user_service v0.0.0
 	go.mongodb.org/mongo-driver v1.17.3
 	go.opentelemetry.io/otel v1.40.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.40.0
@@ -71,5 +71,3 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/tird4d/go-microservices/user_service => ../user_service

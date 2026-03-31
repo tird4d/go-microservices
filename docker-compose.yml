@@ -32,8 +32,8 @@ services:
 
   user-service:
     build:
-      context: ./user_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./user_service/Dockerfile
     container_name: go-micro-user-service
     restart: always
     ports:
@@ -49,8 +49,8 @@ services:
 
   auth-service:
     build:
-      context: ./auth_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./auth_service/Dockerfile
     container_name: go-micro-auth-service
     restart: always
     ports:
@@ -65,8 +65,8 @@ services:
 
   product-service:
     build:
-      context: ./product_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./product_service/Dockerfile
     container_name: go-micro-product-service
     restart: always
     ports:

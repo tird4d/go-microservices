@@ -1,18 +1,25 @@
-FROM golang:1.24 AS builder
+FROM golang:1.25 AS builder
 
-# Build context is the REPO ROOT (docker build -f auth_service/Dockerfile .)
-# This allows the replace directive (../user_service) to resolve correctly
+# Build context is the REPO ROOT: docker build -f auth_service/Dockerfile .
 WORKDIR /app
 
-# Copy both module definitions first (better layer caching)
+# Copy go.work first
+COPY go.work go.work.sum* ./
+
+# Copy ALL go.mod files so go.work can resolve every module listed in 'use'
+COPY api_gateway/go.mod ./api_gateway/
 COPY auth_service/go.mod auth_service/go.sum ./auth_service/
+COPY email_service/go.mod ./email_service/
+COPY order_service/go.mod ./order_service/
+COPY product_service/go.mod product_service/go.sum ./product_service/
+COPY user_client/go.mod ./user_client/
 COPY user_service/go.mod user_service/go.sum ./user_service/
 
-# Download dependencies (replace directive resolves because ../user_service exists)
+# Download dependencies
 WORKDIR /app/auth_service
 RUN go mod download
 
-# Copy full source of both modules
+# Copy source of modules actually needed at compile time
 COPY auth_service/ /app/auth_service/
 COPY user_service/ /app/user_service/
 
