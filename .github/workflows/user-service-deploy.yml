@@ -35,8 +35,8 @@ jobs:
       # Step 4: Build Docker image
       - name: Build Docker image
         run: |
-          cd user_service
-          docker build -t 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:${{ github.sha }} .
+          docker build -f user_service/Dockerfile \
+            -t 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:${{ github.sha }} .
           docker tag 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:${{ github.sha }} \
                      114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:latest
       

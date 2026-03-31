@@ -33,11 +33,10 @@ jobs:
           docker login --username AWS --password-stdin 114851843413.dkr.ecr.eu-central-1.amazonaws.com
 
       # Step 4: Build Docker image
-      # product_service has no replace directives - build from its own directory
+      # Build from repo root so go.work is available inside the Docker build context
       - name: Build Docker image
         run: |
-          cd product_service
-          docker build \
+          docker build -f product_service/Dockerfile \
             -t 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/product-service:${{ github.sha }} .
           docker tag \
             114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/product-service:${{ github.sha }} \

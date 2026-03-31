@@ -1,0 +1,16 @@
+go 1.25.6
+
+use (
+	./api_gateway
+	./auth_service
+	./email_service
+	./order_service
+	./product_service
+	./user_client
+	./user_service
+)
+
+replace (
+	github.com/tird4d/go-microservices/product_service v0.0.0 => ./product_service
+	github.com/tird4d/go-microservices/user_service v0.0.0 => ./user_service
+)
