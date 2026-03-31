@@ -1,17 +1,22 @@
 package utils
 
 import (
+	"os"
 	"testing"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func init() {
-	err := godotenv.Load("../.env")
-	if err != nil {
-		panic("❌ Failed to load .env file")
+func TestMain(m *testing.M) {
+	_ = godotenv.Load("../.env")
+
+	// Ensure JWT_SECRET is set for tests (fallback when .env is absent, e.g. in CI)
+	if os.Getenv("JWT_SECRET") == "" {
+		os.Setenv("JWT_SECRET", "test-secret-key-for-ci")
 	}
+
+	os.Exit(m.Run())
 }
 
 func TestGenerateJwt(t *testing.T) {

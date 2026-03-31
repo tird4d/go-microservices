@@ -26,6 +26,11 @@ func TestMain(m *testing.M) {
 		logger.Log.Error("Error loading .env file")
 	}
 
+	// Ensure JWT_SECRET is set for tests (fallback when .env is absent, e.g. in CI)
+	if os.Getenv("JWT_SECRET") == "" {
+		os.Setenv("JWT_SECRET", "test-secret-key-for-ci")
+	}
+
 	os.Exit(m.Run())
 
 }
