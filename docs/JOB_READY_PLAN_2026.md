@@ -68,7 +68,7 @@
 - [x] Set up GitHub Actions workflow for api-gateway ✅
 - [x] Set up GitHub Actions workflow for frontend-service ✅
 - [ ] Automate tests on PR
-- [ ] Add security scanning (Trivy)
+  - [x] Add security scanning (Trivy)
 - [ ] **Security Hardening (after all workflows done):**
   - [ ] Replace static AWS keys with GitHub OIDC (no more AWS_ACCESS_KEY_ID in GitHub Secrets)
   - [ ] Add External Secrets Operator — sync secrets from AWS Secrets Manager into K8s automatically
