@@ -53,20 +53,31 @@ jobs:
           docker tag 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:${{ github.sha }} \
                      114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:latest
       
-      # Step 7: Push to ECR
+      # Step 7: Scan Docker image with Trivy
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # Step 8: Push to ECR
       - name: Push to Amazon ECR
         run: |
           docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:${{ github.sha }}
           docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/user-service:latest
       
-      # Step 8: Update kubeconfig
+      # Step 9: Update kubeconfig
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig \
             --region eu-central-1 \
             --name go-microservices
       
-      # Step 9: Reconstruct secrets file from GitHub Actions Secrets
+      # Step 10: Reconstruct secrets file from GitHub Actions Secrets
       # The secrets/ directory is gitignored - we build it on the fly here
       - name: Create secrets file
         env:
@@ -78,12 +89,12 @@ jobs:
             mongoUri: "${MONGO_URI}"
           EOF
 
-      # Step 10: Ensure namespace exists
+      # Step 11: Ensure namespace exists
       - name: Create namespace if not exists
         run: |
           kubectl get namespace prod || kubectl create namespace prod
 
-      # Step 11: Deploy with Helm
+      # Step 12: Deploy with Helm
       - name: Deploy with Helm
         run: |
           helm upgrade --install user-service ./charts/user-service \
@@ -94,7 +105,7 @@ jobs:
             --atomic \
             --timeout 5m
       
-      # Step 12: Verify deployment
+      # Step 13: Verify deployment
       - name: Verify deployment
         run: |
           kubectl rollout status deployment/user-service -n prod --timeout=5m
