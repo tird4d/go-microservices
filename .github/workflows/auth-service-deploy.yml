@@ -8,6 +8,12 @@ on:
       - 'auth_service/**'  # Only trigger if auth_service code changed
       - 'charts/auth-service/**'
       - '.github/workflows/auth-service-deploy.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'auth_service/**'
+      - 'charts/auth-service/**'
+      - '.github/workflows/auth-service-deploy.yml'
 
 jobs:
   build-and-deploy:
@@ -20,6 +26,7 @@ jobs:
       
       # Step 2: Configure AWS credentials
       - name: Configure AWS credentials
+        if: github.event_name == 'push'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -28,6 +35,7 @@ jobs:
       
       # Step 3: Login to ECR
       - name: Login to Amazon ECR
+        if: github.event_name == 'push'
         run: |
           aws ecr get-login-password --region eu-central-1 | \
           docker login --username AWS --password-stdin 114851843413.dkr.ecr.eu-central-1.amazonaws.com
@@ -47,6 +55,7 @@ jobs:
 
       # Step 6: Build Docker image
       - name: Build Docker image
+        if: github.event_name == 'push'
         run: |
           docker build -f auth_service/Dockerfile \
             -t 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:${{ github.sha }} .
@@ -56,7 +65,8 @@ jobs:
       
       # Step 7: Scan Docker image with Trivy
       - name: Scan Docker image with Trivy
-        uses: aquasecurity/trivy-action@master
+        if: github.event_name == 'push'
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # trivy v0.69.3 (Mar 4 2026)
         with:
           image-ref: '114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:${{ github.sha }}'
           format: 'table'
@@ -67,12 +77,14 @@ jobs:
 
       # Step 8: Push to ECR
       - name: Push to Amazon ECR
+        if: github.event_name == 'push'
         run: |
           docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:${{ github.sha }}
           docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/auth-service:latest
       
       # Step 9: Update kubeconfig
       - name: Update kubeconfig
+        if: github.event_name == 'push'
         run: |
           aws eks update-kubeconfig \
             --region eu-central-1 \
@@ -81,6 +93,7 @@ jobs:
       # Step 10: Reconstruct secrets file from GitHub Actions Secrets
       # The secrets/ directory is gitignored - we build it on the fly here
       - name: Create secrets file
+        if: github.event_name == 'push'
         env:
           MONGO_URI: ${{ secrets.AUTH_SERVICE_MONGO_URI }}
           JWT_SECRET: ${{ secrets.AUTH_SERVICE_JWT_SECRET }}
@@ -101,11 +114,13 @@ jobs:
 
       # Step 11: Ensure namespace exists
       - name: Create namespace if not exists
+        if: github.event_name == 'push'
         run: |
           kubectl get namespace prod || kubectl create namespace prod
 
       # Step 12: Deploy with Helm
       - name: Deploy with Helm
+        if: github.event_name == 'push'
         run: |
           helm upgrade --install auth-service ./charts/auth-service \
             -f charts/auth-service/values.yaml \
@@ -117,6 +132,7 @@ jobs:
       
       # Step 13: Verify deployment
       - name: Verify deployment
+        if: github.event_name == 'push'
         run: |
           kubectl rollout status deployment/auth-service -n prod --timeout=5m
           kubectl get pods -n prod -l app.kubernetes.io/instance=auth-service
