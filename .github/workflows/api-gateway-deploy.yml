@@ -32,19 +32,20 @@ jobs:
           aws ecr get-login-password --region eu-central-1 | \
           docker login --username AWS --password-stdin 114851843413.dkr.ecr.eu-central-1.amazonaws.com
 
-      # Step 4: Set up Go and run tests
+      # Step 4: Set up Go
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.25.6'
 
+      # Step 5: Run tests
       - name: Run tests
         run: |
           cd api_gateway
           go test ./... -v -race -coverprofile=coverage.out
           go tool cover -func=coverage.out
 
-      # Step 5: Build Docker image
+      # Step 6: Build Docker image
       # so it can resolve replace directives for user_service, auth_service, product_service
       - name: Build Docker image
         run: |
@@ -54,25 +55,36 @@ jobs:
             114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/api-gateway:${{ github.sha }} \
             114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/api-gateway:latest
 
-      # Step 5: Push to ECR
+      # Step 7: Scan Docker image with Trivy
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/api-gateway:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # Step 8: Push to ECR
       - name: Push to Amazon ECR
         run: |
           docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/api-gateway:${{ github.sha }}
           docker push 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/api-gateway:latest
 
-      # Step 6: Update kubeconfig
+      # Step 9: Update kubeconfig
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig \
             --region eu-central-1 \
             --name go-microservices
 
-      # Step 8: Ensure namespace exists
+      # Step 10: Create namespace if not exists
       - name: Create namespace if not exists
         run: |
           kubectl get namespace prod || kubectl create namespace prod
 
-      # Step 9: Deploy with Helm
+      # Step 11: Deploy with Helm
       # api-gateway has no secrets — all config (gRPC addresses) is in values.yaml
       - name: Deploy with Helm
         run: |
@@ -83,7 +95,7 @@ jobs:
             --atomic \
             --timeout 5m
 
-      # Step 10: Verify deployment
+      # Step 12: Verify deployment
       - name: Verify deployment
         run: |
           kubectl rollout status deployment/api-gateway -n prod --timeout=5m

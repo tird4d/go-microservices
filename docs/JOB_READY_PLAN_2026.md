@@ -53,11 +53,12 @@
 - [x] Document testing strategy
 
 #### Week 5-6: Load Testing (40h) 🔄 IN PROGRESS
-- [ ] Install k6 for load testing
-- [ ] Create test scenarios for each service
-- [ ] Test API Gateway under 1K, 5K, 10K requests/sec
+- [x] Install k6 for load testing
+- [x] Create test scenarios for each service (api_gateway, product_service, user_service gRPC)
+- [x] Light local runs completed (basic smoke tests with docker-compose)
+- [ ] Run full load test against EKS (1K, 5K, 10K req/sec) — needs cluster up
 - [ ] Identify bottlenecks and optimize
-- [ ] Document performance benchmarks
+- [ ] Document performance benchmarks with real numbers
 - [ ] Add results to portfolio (graphs, metrics)
 
 #### Week 7-8: CI/CD Pipeline (40h) ✅ DONE
@@ -71,10 +72,8 @@
 - [ ] **Security Hardening (after all workflows done):**
   - [ ] Replace static AWS keys with GitHub OIDC (no more AWS_ACCESS_KEY_ID in GitHub Secrets)
   - [ ] Add External Secrets Operator — sync secrets from AWS Secrets Manager into K8s automatically
-  - [ ] Migrate service secrets to AWS Secrets Manager  - [ ] **Go Workspace refactor (go.work):**
-    - [ ] Replace all `replace` directives in go.mod files with a single `go.work` file in repo root
-    - [ ] Update all Dockerfiles to use simpler build context (no more `-f service/Dockerfile .` needed)
-    - [ ] Cleaner monorepo module management across all services- [ ] Document CI/CD flow
+  - [ ] Migrate service secrets to AWS Secrets Manager  
+- [x] **Go Workspace refactor (go.work):** ✅ DONE (March 31, 2026)
 
 **Deliverable:** Fully tested microservices with observability basics ✅ (Tests & Tracing DONE!)
 
