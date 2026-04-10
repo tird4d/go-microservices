@@ -388,14 +388,23 @@
 
 ### Books to Read (in order):
 1. **Kubernetes in Action** (Month 3) - €50
-2. **Designing Data-Intensive Applications** (Month 10) - €40
-3. **Building Microservices** - reference throughout
-4. **Domain-Driven Design Distilled** (Month 6) - €30
+2. **Prometheus: Up & Running** (Brian Brazil, O'Reilly) - Month 4 - covers PromQL, labels, counters/histograms deeply
+3. **Designing Data-Intensive Applications** (Month 10) - €40
+4. **Building Microservices** - reference throughout
+5. **Domain-Driven Design Distilled** (Month 6) - €30
 
 ### Online Courses:
 1. **EKS Workshop** (eksworkshop.com) - Free - Month 3
 2. **TechWorld with Nana - Kubernetes** - Free - Month 3
 3. **System Design Interview** (educative.io) - €60 - Month 10
+
+### Prometheus & Grafana (Month 4 — study alongside implementation):
+- 📖 **PromQL basics** — https://prometheus.io/docs/prometheus/latest/querying/basics/
+  - Key functions to master: `rate()`, `irate()`, `histogram_quantile()`, `increase()`, `topk()`
+- 🎓 **Grafana tutorials** (interactive, browser-based) — https://grafana.com/tutorials/
+  - Focus: Dashboard variables, Alerting rules, Annotations
+- 📖 **Google SRE — 4 Golden Signals** (free, ~10 min read) — https://sre.google/sre-book/monitoring-distributed-systems/
+  - The original source: Traffic, Latency, Errors, Saturation
 
 ### Communities to Join:
 - Gophers Slack

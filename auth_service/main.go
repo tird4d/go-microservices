@@ -4,14 +4,17 @@ import (
 	"context"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tird4d/go-microservices/auth_service/config"
 	"github.com/tird4d/go-microservices/auth_service/handlers"
 	"github.com/tird4d/go-microservices/auth_service/interceptors"
 	"github.com/tird4d/go-microservices/auth_service/logger"
+	"github.com/tird4d/go-microservices/auth_service/metrics"
 	authpb "github.com/tird4d/go-microservices/auth_service/proto"
 	"github.com/tird4d/go-microservices/auth_service/tracing"
 	userpb "github.com/tird4d/go-microservices/user_service/proto"
@@ -35,6 +38,17 @@ func main() {
 	if jaegerEndpoint == "" {
 		jaegerEndpoint = "jaeger:4317" // Default for docker-compose
 	}
+
+
+	// Prometheus initialization
+	metrics.InitMetrics()
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(":2112", nil); err != nil {
+			logger.Log.Fatalw("❌ Failed to start metrics HTTP server", "error", err)
+		}
+	}()
+
 
 	tp, err := tracing.InitTracer("auth-service", jaegerEndpoint)
 	if err != nil {

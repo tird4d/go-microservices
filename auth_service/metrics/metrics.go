@@ -8,7 +8,7 @@ var (
 	// Counter with endpoint label
 	RequestCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "user_service_requests_total",
+			Name: "auth_service_requests_total",
 			Help: "Total number of requests to auth-service, labeled by endpoint",
 		},
 		[]string{"endpoint"},
@@ -17,7 +17,7 @@ var (
 	// Histogram for request duration
 	RequestDurationHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "user_service_request_duration_seconds",
+			Name:    "auth_service_request_duration_seconds",
 			Help:    "Histogram of response durations for auth-service requests, labeled by endpoint",
 			Buckets: prometheus.DefBuckets,
 		},
