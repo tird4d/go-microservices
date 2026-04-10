@@ -2,6 +2,16 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+# Load alert rules
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+# AlertManager connection
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
 scrape_configs:
   - job_name: 'auth-service'
     static_configs:

@@ -122,18 +122,15 @@
 **German:** Intensive B2 study begins
 
 #### Week 1-2: Monitoring Stack (40h)
-- [ ] Deploy Prometheus with Helm
-- [ ] Deploy Grafana with Helm
-- [ ] Add /metrics endpoint to all Go services
-- [ ] Create Grafana dashboards:
-  - [ ] API Gateway dashboard (requests, latency, errors)
-  - [ ] User Service dashboard
-  - [ ] Auth Service dashboard
-  - [ ] Product Service dashboard
-  - [ ] Infrastructure dashboard (CPU, memory, pods)
-- [ ] Set up Prometheus AlertManager
-- [ ] Create alert rules (high latency, pod crashes, etc.)
-- [ ] Test alert delivery (email/Slack)
+
+- [x] Add `/metrics` endpoint to all Go services (port 2112, gRPC interceptor pattern)
+- [x] Set up Prometheus + Grafana + AlertManager in docker-compose
+- [x] Create 4 Golden Signals dashboard (traffic, latency p99/p50, saturation)
+- [x] Add alert rules (`ServiceDown`, `HighLatencyP99`) and tested firing
+- [ ] Deploy `kube-prometheus-stack` to EKS (1 Helm install = Prometheus + Grafana + AlertManager + node-exporter + kube-state-metrics)
+- [ ] Add `ServiceMonitor` CRD + named `metrics` port to each service's Helm chart
+- [ ] Import 4 Golden Signals dashboard to EKS Grafana
+- [ ] Configure AlertManager Slack/email and verify alert fires on EKS
 
 #### Week 3-4: Domain, TLS & Autoscaling (40h)
 - [ ] Register domain (e.g., go-microservices.dev - ~€10/year)

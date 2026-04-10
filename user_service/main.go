@@ -55,14 +55,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	// ============ PROMETHEUS METRICS ============
+	// InitMetrics must be called before the goroutine so metrics are registered
+	// before any request could theoretically come in
+	metrics.InitMetrics()
 	go func() {
-		metrics.InitMetrics()
-
 		http.Handle("/metrics", promhttp.Handler())
+		logger.Log.Infow("✅ Metrics server is running on port", "port", 2112)
 		if err := http.ListenAndServe(":2112", nil); err != nil {
 			logger.Log.Fatal("❌ Failed to start metrics HTTP server", "error", err)
 		}
-		logger.Log.Infow("✅ Metrics server is running on port", "port", 2112)
 	}()
 
 	grpcServer := grpc.NewServer(
