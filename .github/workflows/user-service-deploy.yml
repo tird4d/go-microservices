@@ -94,12 +94,12 @@ jobs:
       - name: Create secrets file
         if: github.event_name == 'push'
         env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
+          USER_SERVICE_MONGO_URI: ${{ secrets.USER_SERVICE_MONGO_URI }}
         run: |
           mkdir -p secrets
           cat <<EOF > secrets/user-service.values.prod.yaml
           secrets:
-            mongoUri: "${MONGO_URI}"
+            mongoUri: "${USER_SERVICE_MONGO_URI}"
           EOF
 
       # Step 11: Ensure namespace exists
