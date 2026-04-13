@@ -27,6 +27,11 @@
           "expr": "rate(product_service_requests_total[1m])",
           "legendFormat": "product — {{endpoint}}",
           "refId": "B"
+        },
+        {
+          "expr": "rate(user_service_requests_total[1m])",
+          "legendFormat": "user — {{endpoint}}",
+          "refId": "C"
         }
       ]
     },
@@ -70,6 +75,16 @@
           "expr": "histogram_quantile(0.50, rate(product_service_request_duration_seconds_bucket[1m]))",
           "legendFormat": "product p50",
           "refId": "D"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(user_service_request_duration_seconds_bucket[1m]))",
+          "legendFormat": "user p99",
+          "refId": "E"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(user_service_request_duration_seconds_bucket[1m]))",
+          "legendFormat": "user p50",
+          "refId": "F"
         }
       ]
     },
@@ -93,6 +108,11 @@
           "expr": "sum(product_service_requests_total)",
           "legendFormat": "product total",
           "refId": "B"
+        },
+        {
+          "expr": "sum(user_service_requests_total)",
+          "legendFormat": "user total",
+          "refId": "C"
         }
       ]
     },
@@ -116,6 +136,11 @@
           "expr": "rate(product_service_request_duration_seconds_sum[5m]) / rate(product_service_request_duration_seconds_count[5m])",
           "legendFormat": "product avg",
           "refId": "B"
+        },
+        {
+          "expr": "rate(user_service_request_duration_seconds_sum[5m]) / rate(user_service_request_duration_seconds_count[5m])",
+          "legendFormat": "user avg",
+          "refId": "C"
         }
       ]
     },
@@ -141,6 +166,11 @@
           "expr": "go_goroutines{job=\"product-service\"}",
           "legendFormat": "product goroutines",
           "refId": "B"
+        },
+        {
+          "expr": "go_goroutines{job=\"user-service\"}",
+          "legendFormat": "user goroutines",
+          "refId": "C"
         }
       ]
     }
