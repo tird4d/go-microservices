@@ -11,5 +11,9 @@ spec:
       targetPort: {{ .Values.service.port }}
       protocol: TCP
       name: grpc
+    - port: 2112
+      targetPort: 2112
+      protocol: TCP
+      name: metrics
   selector:
     {{- include "auth-service.selectorLabels" . | nindent 4 }}

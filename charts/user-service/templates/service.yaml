@@ -11,6 +11,10 @@ spec:
       targetPort: {{ .Values.service.port }}
       protocol: TCP
       name: grpc
+    - port: 2112           # ← add for Prometheus metrics
+      targetPort: 2112
+      protocol: TCP
+      name: metrics   
 
   selector:
     {{- include "user-service.selectorLabels" . | nindent 4 }}

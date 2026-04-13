@@ -7,18 +7,18 @@ metadata:
   version: "1.35"
 
 vpc:
-  id: "vpc-04f534c012342639b"
+  id: "vpc-01ab3fec806555ef8"
   subnets:
     private:
       eu-central-1a:
-        id: "subnet-0b39069ec80a76510"
+        id: "subnet-08da55ba2618bd347"
       eu-central-1b:
-        id: "subnet-013c47ce9af92ae35"
+        id: "subnet-0dbe4e81249fc3d86"
     public:
       eu-central-1a:
-        id: "subnet-03f95515e3f65bd2a"
+        id: "subnet-0e50d9e5ed948cecc"
       eu-central-1b:
-        id: "subnet-0fe573c19c254c327"
+        id: "subnet-045f84af2c648ecd6"
 
 managedNodeGroups:
   - name: ng-1
@@ -31,14 +31,14 @@ managedNodeGroups:
 
 
 # private_subnet_ids = [
-#   "subnet-07cd9eef3013166e9",
-#   "subnet-0c2d8e899e0af4a39",
+#   "subnet-08da55ba2618bd347",
+#   "subnet-0dbe4e81249fc3d86",
 # ]
 # public_subnet_ids = [
-#   "subnet-011ec8236a32db47d",
-#   "subnet-0594e301296029a2a",
+#   "subnet-0e50d9e5ed948cecc",
+#   "subnet-045f84af2c648ecd6",
 # ]
 # redis_endpoint = "go-microservices-elasticache-mlep6v.serverless.euc1.cache.amazonaws.com"
 # redis_port = 6379
-# redis_sg_id = "sg-07d4d8a55540ab7b4"
-# vpc_id = "vpc-024ed9aaf851441f1"
+# redis_sg_id = "sg-07f125b2c692b8c5c"
+# vpc_id = "vpc-01ab3fec806555ef8"
