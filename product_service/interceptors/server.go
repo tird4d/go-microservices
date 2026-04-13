@@ -3,6 +3,8 @@ package interceptors
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tird4d/go-microservices/product_service/metrics"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -27,6 +29,11 @@ func UnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.Una
 attribute.String("rpc.service", info.FullMethod),
 attribute.String("rpc.method", info.FullMethod),
 )
+
+	// ============ METRICS ============
+	timer := prometheus.NewTimer(metrics.RequestDurationHistogram.WithLabelValues(info.FullMethod))
+	defer timer.ObserveDuration()
+	metrics.RequestCounter.WithLabelValues(info.FullMethod).Inc()
 
 	// Call the handler
 	resp, err := handler(ctx, req)

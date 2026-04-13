@@ -122,18 +122,15 @@
 **German:** Intensive B2 study begins
 
 #### Week 1-2: Monitoring Stack (40h)
-- [ ] Deploy Prometheus with Helm
-- [ ] Deploy Grafana with Helm
-- [ ] Add /metrics endpoint to all Go services
-- [ ] Create Grafana dashboards:
-  - [ ] API Gateway dashboard (requests, latency, errors)
-  - [ ] User Service dashboard
-  - [ ] Auth Service dashboard
-  - [ ] Product Service dashboard
-  - [ ] Infrastructure dashboard (CPU, memory, pods)
-- [ ] Set up Prometheus AlertManager
-- [ ] Create alert rules (high latency, pod crashes, etc.)
-- [ ] Test alert delivery (email/Slack)
+
+- [x] Add `/metrics` endpoint to all Go services (port 2112, gRPC interceptor pattern)
+- [x] Set up Prometheus + Grafana + AlertManager in docker-compose
+- [x] Create 4 Golden Signals dashboard (traffic, latency p99/p50, saturation)
+- [x] Add alert rules (`ServiceDown`, `HighLatencyP99`) and tested firing
+- [ ] Deploy `kube-prometheus-stack` to EKS (1 Helm install = Prometheus + Grafana + AlertManager + node-exporter + kube-state-metrics)
+- [ ] Add `ServiceMonitor` CRD + named `metrics` port to each service's Helm chart
+- [ ] Import 4 Golden Signals dashboard to EKS Grafana
+- [ ] Configure AlertManager Slack/email and verify alert fires on EKS
 
 #### Week 3-4: Domain, TLS & Autoscaling (40h)
 - [ ] Register domain (e.g., go-microservices.dev - ~€10/year)
@@ -388,14 +385,23 @@
 
 ### Books to Read (in order):
 1. **Kubernetes in Action** (Month 3) - €50
-2. **Designing Data-Intensive Applications** (Month 10) - €40
-3. **Building Microservices** - reference throughout
-4. **Domain-Driven Design Distilled** (Month 6) - €30
+2. **Prometheus: Up & Running** (Brian Brazil, O'Reilly) - Month 4 - covers PromQL, labels, counters/histograms deeply
+3. **Designing Data-Intensive Applications** (Month 10) - €40
+4. **Building Microservices** - reference throughout
+5. **Domain-Driven Design Distilled** (Month 6) - €30
 
 ### Online Courses:
 1. **EKS Workshop** (eksworkshop.com) - Free - Month 3
 2. **TechWorld with Nana - Kubernetes** - Free - Month 3
 3. **System Design Interview** (educative.io) - €60 - Month 10
+
+### Prometheus & Grafana (Month 4 — study alongside implementation):
+- 📖 **PromQL basics** — https://prometheus.io/docs/prometheus/latest/querying/basics/
+  - Key functions to master: `rate()`, `irate()`, `histogram_quantile()`, `increase()`, `topk()`
+- 🎓 **Grafana tutorials** (interactive, browser-based) — https://grafana.com/tutorials/
+  - Focus: Dashboard variables, Alerting rules, Annotations
+- 📖 **Google SRE — 4 Golden Signals** (free, ~10 min read) — https://sre.google/sre-book/monitoring-distributed-systems/
+  - The original source: Traffic, Latency, Errors, Saturation
 
 ### Communities to Join:
 - Gophers Slack

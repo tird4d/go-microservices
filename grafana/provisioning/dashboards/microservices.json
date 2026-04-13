@@ -1,0 +1,148 @@
+{
+  "title": "Go Microservices - 4 Golden Signals",
+  "uid": "go-microservices-golden",
+  "timezone": "browser",
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "🚦 Traffic — Request Rate (req/s)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(auth_service_requests_total[1m])",
+          "legendFormat": "auth — {{endpoint}}",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(product_service_requests_total[1m])",
+          "legendFormat": "product — {{endpoint}}",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "⏱️ Latency — p99 Response Time",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "red", "value": 1.0 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(auth_service_request_duration_seconds_bucket[1m]))",
+          "legendFormat": "auth p99",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(auth_service_request_duration_seconds_bucket[1m]))",
+          "legendFormat": "auth p50",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(product_service_request_duration_seconds_bucket[1m]))",
+          "legendFormat": "product p99",
+          "refId": "C"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(product_service_request_duration_seconds_bucket[1m]))",
+          "legendFormat": "product p50",
+          "refId": "D"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "📊 Total Requests (cumulative)",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "sum(auth_service_requests_total)",
+          "legendFormat": "auth total",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(product_service_requests_total)",
+          "legendFormat": "product total",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "📈 Average Latency",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 8, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "rate(auth_service_request_duration_seconds_sum[5m]) / rate(auth_service_request_duration_seconds_count[5m])",
+          "legendFormat": "auth avg",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(product_service_request_duration_seconds_sum[5m]) / rate(product_service_request_duration_seconds_count[5m])",
+          "legendFormat": "product avg",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "🔧 Saturation — Goroutines",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "go_goroutines{job=\"auth-service\"}",
+          "legendFormat": "auth goroutines",
+          "refId": "A"
+        },
+        {
+          "expr": "go_goroutines{job=\"product-service\"}",
+          "legendFormat": "product goroutines",
+          "refId": "B"
+        }
+      ]
+    }
+  ]
+}

@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"net"
+	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tird4d/go-microservices/product_service/config"
 	"github.com/tird4d/go-microservices/product_service/handlers"
 	"github.com/tird4d/go-microservices/product_service/interceptors"
 	"github.com/tird4d/go-microservices/product_service/logger"
+	"github.com/tird4d/go-microservices/product_service/metrics"
 	productpb "github.com/tird4d/go-microservices/product_service/proto"
 	"github.com/tird4d/go-microservices/product_service/tracing"
 
@@ -21,6 +24,15 @@ import (
 func main() {
 
 	logger.InitLogger(true)
+
+	// ============ PROMETHEUS METRICS ============
+	metrics.InitMetrics()
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(":2112", nil); err != nil {
+			logger.Log.Fatalw("❌ Failed to start metrics HTTP server", "error", err)
+		}
+	}()
 
 	err := godotenv.Load()
 	if err != nil {
