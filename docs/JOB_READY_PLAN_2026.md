@@ -127,10 +127,11 @@
 - [x] Set up Prometheus + Grafana + AlertManager in docker-compose
 - [x] Create 4 Golden Signals dashboard (traffic, latency p99/p50, saturation)
 - [x] Add alert rules (`ServiceDown`, `HighLatencyP99`) and tested firing
-- [ ] Deploy `kube-prometheus-stack` to EKS (1 Helm install = Prometheus + Grafana + AlertManager + node-exporter + kube-state-metrics)
-- [ ] Add `ServiceMonitor` CRD + named `metrics` port to each service's Helm chart
-- [ ] Import 4 Golden Signals dashboard to EKS Grafana
-- [ ] Configure AlertManager Slack/email and verify alert fires on EKS
+- [x] Deploy `kube-prometheus-stack` to EKS (1 Helm install = Prometheus + Grafana + AlertManager + node-exporter + kube-state-metrics)
+- [x] Add `ServiceMonitor` CRD + named `metrics` port to each service's Helm chart
+- [x] Import 4 Golden Signals dashboard to EKS Grafana
+- [x] Configure AlertManager rules (`ServiceDown`, `HighLatencyP99`, `PodCrashLooping`) and verified alert fires on EKS (Slack/email optional — receiver ready in `infra/monitoring/values.yaml`)
+- [ ] Deploy Jaeger to EKS (`jaegertracing/all-in-one`, namespace: `tracing`), wire `JAEGER_ENDPOINT` in all service charts, verify traces in Jaeger UI
 
 #### Week 3-4: Domain, TLS & Autoscaling (40h)
 - [ ] Register domain (e.g., go-microservices.dev - ~€10/year)

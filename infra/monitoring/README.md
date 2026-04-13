@@ -273,40 +273,12 @@ kubectl label configmap microservices-dashboard \
 
 ---
 
-## Configure AlertManager (optional)
+## Configure AlertManager + Alert Rules
 
-The stack ships with a default AlertManager config. To add Slack notifications,
-override the config via Helm values:
+The values file `infra/monitoring/values.yaml` configures both the **alert rules**
+(what fires) and **AlertManager** (where notifications go) in one Helm upgrade.
 
-Create a file `infra/monitoring/values.yaml`:
-
-```yaml
-alertmanager:
-  config:
-    global:
-      resolve_timeout: 5m
-    route:
-      group_by: ['job', 'severity']
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 12h
-      receiver: 'slack'
-    receivers:
-      - name: 'slack'
-        slack_configs:
-          - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
-            channel: '#alerts'
-            title: '{{ .GroupLabels.job }} — {{ .CommonLabels.severity }}'
-            text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
-    inhibit_rules:
-      - source_matchers:
-          - severity="critical"
-        target_matchers:
-          - severity="warning"
-        equal: ['job']
-```
-
-Then upgrade the release with the values file:
+### Step 1 — Apply the values file
 
 ```bash
 helm upgrade monitoring prometheus-community/kube-prometheus-stack \
@@ -317,6 +289,53 @@ helm upgrade monitoring prometheus-community/kube-prometheus-stack \
 
 > `--reuse-values` keeps all previously set values (like `grafana.adminPassword`)
 > and only overrides what is in your file.
+
+### Step 2 — Verify alert rules loaded
+
+```bash
+kubectl port-forward svc/monitoring-kube-prometheus-prometheus 9091:9090 -n monitoring
+```
+
+Go to `http://localhost:9091` → **Alerts** tab. You should see:
+
+| Alert | Severity | Fires when |
+|---|---|---|
+| `ServiceDown` | critical | Prometheus can't scrape a service for 1 min |
+| `HighLatencyP99` | warning | p99 > 500ms for 2 min on any service |
+| `PodCrashLooping` | critical | A pod restarts > 3 times in 15 min |
+
+### Step 3 — Test an alert fires
+
+```bash
+# Scale a service to 0 replicas → triggers ServiceDown after 1 minute
+kubectl scale deployment user-service --replicas=0 -n prod
+
+# Open AlertManager UI to see it fire
+kubectl port-forward svc/monitoring-kube-prometheus-alertmanager 9093:9093 -n monitoring
+# → http://localhost:9093
+
+# Restore the service
+kubectl scale deployment user-service --replicas=1 -n prod
+# Alert resolves within ~1 minute
+```
+
+### Step 4 — Enable Slack notifications (optional)
+
+Edit `infra/monitoring/values.yaml` — find the commented Slack block and fill in your webhook:
+
+```yaml
+receivers:
+  - name: 'slack'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#alerts'
+        send_resolved: true
+        title: '{{ .GroupLabels.alertname }} — {{ .CommonLabels.severity }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+```
+
+Then change the `receiver:` fields in the `route` section from `'null'` to `'slack'`,
+and re-run the helm upgrade command from Step 1.
 
 ---
 

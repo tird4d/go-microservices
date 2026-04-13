@@ -139,13 +139,13 @@ eksctl delete cluster -f infra/eks/cluster.yaml
 
 ---
 
-## Current state (as of March 2026)
+## Current state (as of April 2026)
 
 | Item | Value |
 |---|---|
 | Controller namespace | `ingress-nginx` |
-| AWS LB DNS | `a12ffaa748e4147658b56ac347ce2726-1854249424.eu-central-1.elb.amazonaws.com` |
-| LB IPs | `52.57.55.201`, `18.159.58.27` |
+| AWS LB DNS | — (cluster not running) |
+| LB IPs | — (cluster not running) |
 | Region | `eu-central-1` |
 | Ingress rules | `api-gateway` → `/api/*`, `frontend-service` → `/` |
 | App namespace | `prod` |
