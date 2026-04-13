@@ -25,7 +25,7 @@ COPY product_service/ /app/product_service/
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o product_service .
 
 # Download grpc-health-probe binary (same version as user-service)
-ADD https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.37/grpc_health_probe-linux-amd64 /app/grpc-health-probe
+ADD https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.48/grpc_health_probe-linux-amd64 /app/grpc-health-probe
 RUN chmod +x /app/grpc-health-probe
 
 # Stage 2: Runtime (distroless)
