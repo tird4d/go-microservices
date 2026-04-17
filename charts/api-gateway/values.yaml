@@ -123,4 +123,4 @@ env:
   userServiceAddr: "user-service:50051"
   authServiceAddr: "auth-service:50052"
   productServiceAddr: "product-service:50053"
-  jaegerEndpoint: "jaeger-all-in-one.tracing.svc.cluster.local:4317"
+  jaegerEndpoint: "jaeger.tracing.svc.cluster.local:4317"

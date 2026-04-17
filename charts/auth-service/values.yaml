@@ -134,4 +134,4 @@ secrets:
 
 env:
   port: "50052"
-  jaegerEndpoint: "jaeger-all-in-one.tracing.svc.cluster.local:4317"
+  jaegerEndpoint: "jaeger.tracing.svc.cluster.local:4317"

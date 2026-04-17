@@ -169,4 +169,4 @@ secrets:
 env:
   port: "50053"
   mongoDb: "go-micro-product"
-  jaegerEndpoint: "jaeger-all-in-one.tracing.svc.cluster.local:4317"
+  jaegerEndpoint: "jaeger.tracing.svc.cluster.local:4317"
