@@ -131,7 +131,7 @@
 - [x] Add `ServiceMonitor` CRD + named `metrics` port to each service's Helm chart
 - [x] Import 4 Golden Signals dashboard to EKS Grafana
 - [x] Configure AlertManager rules (`ServiceDown`, `HighLatencyP99`, `PodCrashLooping`) and verified alert fires on EKS (Slack/email optional — receiver ready in `infra/monitoring/values.yaml`)
-- [ ] Deploy Jaeger to EKS (`jaegertracing/all-in-one`, namespace: `tracing`), wire `JAEGER_ENDPOINT` in all service charts, verify traces in Jaeger UI
+- [x] Deploy Jaeger to EKS (`jaegertracing/all-in-one`, namespace: `tracing`), wire `JAEGER_ENDPOINT` in all service charts, verify traces in Jaeger UI
 
 #### Week 3-4: Domain, TLS & Autoscaling (40h)
 - [ ] Register domain (e.g., go-microservices.dev - ~€10/year)
@@ -140,9 +140,9 @@
 - [ ] Configure Let's Encrypt for TLS
 - [ ] Update Ingress with TLS config
 - [ ] Test HTTPS access
-- [ ] Enable IRSA (IAM Roles for Service Accounts) on the cluster
+- [x] Enable IRSA (IAM Roles for Service Accounts) on the cluster
 - [ ] Install **Cluster Autoscaler** (node-level scaling — scales EC2 nodes when pods are Pending)
-- [ ] Add **Horizontal Pod Autoscaler (HPA)** (pod-level scaling — scales replicas based on CPU/memory)
+- [x] Add **Horizontal Pod Autoscaler (HPA)** (pod-level scaling — scales replicas based on CPU/memory)
 - [ ] Load test and verify both autoscalers trigger correctly
 - [ ] Document production setup
 

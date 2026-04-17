@@ -261,6 +261,68 @@ Cluster Autoscaler automatically scales the **number of EC2 nodes** (infrastruct
 - Calls AWS API to scale ASG (no stored credentials)
 - Temporary STS credentials auto-rotated
 
+#### IRSA Setup (Already Done — Recorded for Reference)
+
+**Why do we need IRSA for Cluster Autoscaler?**
+
+Cluster Autoscaler runs as a pod inside Kubernetes, but it needs to call AWS APIs to add/remove EC2 nodes (via the Auto Scaling Group). Without credentials, it can't do anything.
+
+The naive solution is to hard-code AWS keys as environment variables in the pod — but that's a security risk (keys can leak via logs, `kubectl describe`, or a compromised pod).
+
+**IRSA (IAM Roles for Service Accounts)** solves this properly:
+1. The cluster has an OIDC provider (a trust bridge between K8s and AWS IAM)
+2. The Cluster Autoscaler pod uses a Kubernetes ServiceAccount
+3. That ServiceAccount is annotated with an IAM Role ARN
+4. When the pod starts, AWS automatically injects short-lived STS credentials via a projected volume
+5. The pod assumes the IAM role without any stored secrets — credentials rotate automatically every hour
+
+This is the AWS-recommended production pattern. No keys stored anywhere.
+
+---
+
+This was created once with `eksctl`. **Do not run again** — the ServiceAccount and IAM role already exist.
+
+```bash
+# Step 1: Create OIDC provider for the cluster (enables IRSA)
+# This registers the cluster's internal token issuer as a trusted identity provider in AWS IAM.
+# Without this, AWS IAM has no way to verify that a token from this cluster is legitimate.
+eksctl utils associate-iam-oidc-provider \
+  --cluster=go-microservices \
+  --region=eu-central-1 \
+  --approve
+
+# Step 2: Create IAM ServiceAccount with AutoScalingFullAccess
+# This does two things atomically:
+#   a) Creates an IAM Role with a trust policy scoped to this specific ServiceAccount
+#      (only pods using cluster-autoscaler SA in kube-system can assume this role)
+#   b) Creates a Kubernetes ServiceAccount annotated with that role's ARN
+eksctl create iamserviceaccount \
+  --cluster=go-microservices \
+  --namespace=kube-system \
+  --name=cluster-autoscaler \
+  --attach-policy-arn=arn:aws:iam::aws:policy/AutoScalingFullAccess \
+  --override-existing-serviceaccounts \
+  --region=eu-central-1 \
+  --approve
+```
+
+**What this created:**
+- IAM Role: `eksctl-go-microservices-addon-iamserviceaccou-Role1-1vnliWKy9Uk0`
+  - Attached policy: `AutoScalingFullAccess`
+  - Trust policy: allows the cluster's OIDC provider to assume this role
+- K8s ServiceAccount: `cluster-autoscaler` in `kube-system`
+  - Annotation: `eks.amazonaws.com/role-arn: arn:aws:iam::114851843413:role/eksctl-go-microservices-addon-iamserviceaccou-Role1-1vnliWKy9Uk0`
+
+**Verify it's still in place:**
+```bash
+# Check ServiceAccount annotation
+kubectl get sa cluster-autoscaler -n kube-system -o jsonpath='{.metadata.annotations}'
+
+# Check IAM role policy
+aws iam list-attached-role-policies \
+  --role-name eksctl-go-microservices-addon-iamserviceaccou-Role1-1vnliWKy9Uk0
+```
+
 #### Install Cluster Autoscaler
 
 ```bash
@@ -268,21 +330,19 @@ Cluster Autoscaler automatically scales the **number of EC2 nodes** (infrastruct
 helm repo add autoscaler https://kubernetes.github.io/autoscaler
 helm repo update
 
-# Install Cluster Autoscaler
+# Install Cluster Autoscaler (IRSA already set up — use existing ServiceAccount)
 helm install cluster-autoscaler autoscaler/cluster-autoscaler \
   --namespace kube-system \
   --set autoDiscovery.clusterName=go-microservices \
   --set awsRegion=eu-central-1 \
-  --set rbac.serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::YOUR_ACCOUNT_ID:role/cluster-autoscaler" \
+  --set rbac.serviceAccount.create=false \
+  --set rbac.serviceAccount.name=cluster-autoscaler \
   --set extraArgs.balance-similar-node-groups=true \
   --set extraArgs.skip-nodes-with-system-pods=false
 ```
 
-**Replace `YOUR_ACCOUNT_ID`:**
-```bash
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-echo "Account ID: $AWS_ACCOUNT_ID"
-```
+> **Why `rbac.serviceAccount.create=false`?**
+> By default, Helm would create a brand-new ServiceAccount for Cluster Autoscaler. But a new SA would have no IRSA annotation — meaning the pod would start with no AWS credentials and fail silently. We set `create=false` + `name=cluster-autoscaler` to tell Helm: "don't create a SA, just use the existing one that `eksctl` already set up with the IAM role annotation." This is critical — getting this wrong means Cluster Autoscaler runs but can never call AWS.
 
 #### Verify Cluster Autoscaler
 
