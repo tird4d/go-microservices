@@ -38,7 +38,13 @@ ingress:
           pathType: ImplementationSpecific
   tls: []
 
-resources: {}
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
 
 livenessProbe:
   exec:
@@ -79,4 +85,4 @@ secrets:
 env:
   port: "50051"
   mongoDb: "gomicrodb"
-  jaegerEndpoint: "jaeger-all-in-one.tracing.svc.cluster.local:4317"
+  jaegerEndpoint: "jaeger.tracing.svc.cluster.local:4317"
