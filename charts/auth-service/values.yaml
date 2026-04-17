@@ -103,10 +103,10 @@ readinessProbe:
 
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
-  enabled: false
+  enabled: true
   minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
   # targetMemoryUtilizationPercentage: 80
 
 # Additional volumes on the output Deployment definition.
@@ -128,6 +128,14 @@ tolerations: []
 
 affinity: {}
 
+secrets:
+  mongoUri: "mongodb://localhost:27017"
+  redisAddr: "go-microservices-elasticache-mlep6v.serverless.euc1.cache.amazonaws.com:6379"
+  redisTls: "false"
+  jwtSecret: "your-secret-jwt-key-change-me-in-production"
+  rabbitmqUri: "amqp://guest:guest@rabbitmq:5672/"
+  userServiceAddr: "user-service.prod.svc.cluster.local:50051"
+
 env:
   port: "50052"
-  jaegerEndpoint: "jaeger:4317"
+  jaegerEndpoint: "jaeger-all-in-one.tracing.svc.cluster.local:4317"

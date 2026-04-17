@@ -273,40 +273,12 @@ kubectl label configmap microservices-dashboard \
 
 ---
 
-## Configure AlertManager (optional)
+## Configure AlertManager + Alert Rules
 
-The stack ships with a default AlertManager config. To add Slack notifications,
-override the config via Helm values:
+The values file `infra/monitoring/values.yaml` configures both the **alert rules**
+(what fires) and **AlertManager** (where notifications go) in one Helm upgrade.
 
-Create a file `infra/monitoring/values.yaml`:
-
-```yaml
-alertmanager:
-  config:
-    global:
-      resolve_timeout: 5m
-    route:
-      group_by: ['job', 'severity']
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 12h
-      receiver: 'slack'
-    receivers:
-      - name: 'slack'
-        slack_configs:
-          - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
-            channel: '#alerts'
-            title: '{{ .GroupLabels.job }} — {{ .CommonLabels.severity }}'
-            text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
-    inhibit_rules:
-      - source_matchers:
-          - severity="critical"
-        target_matchers:
-          - severity="warning"
-        equal: ['job']
-```
-
-Then upgrade the release with the values file:
+### Step 1 — Apply the values file
 
 ```bash
 helm upgrade monitoring prometheus-community/kube-prometheus-stack \
@@ -318,16 +290,293 @@ helm upgrade monitoring prometheus-community/kube-prometheus-stack \
 > `--reuse-values` keeps all previously set values (like `grafana.adminPassword`)
 > and only overrides what is in your file.
 
----
-
-## Uninstallation
+### Step 2 — Verify alert rules loaded
 
 ```bash
-# Remove the stack
+kubectl port-forward svc/monitoring-kube-prometheus-prometheus 9091:9090 -n monitoring
+```
+
+Go to `http://localhost:9091` → **Alerts** tab. You should see:
+
+| Alert | Severity | Fires when |
+|---|---|---|
+| `ServiceDown` | critical | Prometheus can't scrape a service for 1 min |
+| `HighLatencyP99` | warning | p99 > 500ms for 2 min on any service |
+| `PodCrashLooping` | critical | A pod restarts > 3 times in 15 min |
+
+### Step 3 — Test an alert fires
+
+```bash
+# Scale a service to 0 replicas → triggers ServiceDown after 1 minute
+kubectl scale deployment user-service --replicas=0 -n prod
+
+# Open AlertManager UI to see it fire
+kubectl port-forward svc/monitoring-kube-prometheus-alertmanager 9093:9093 -n monitoring
+# → http://localhost:9093
+
+# Restore the service
+kubectl scale deployment user-service --replicas=1 -n prod
+# Alert resolves within ~1 minute
+```
+
+### Step 4 — Enable Slack notifications (optional)
+
+Edit `infra/monitoring/values.yaml` — find the commented Slack block and fill in your webhook:
+
+```yaml
+receivers:
+  - name: 'slack'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#alerts'
+        send_resolved: true
+        title: '{{ .GroupLabels.alertname }} — {{ .CommonLabels.severity }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+```
+
+Then change the `receiver:` fields in the `route` section from `'null'` to `'slack'`,
+and re-run the helm upgrade command from Step 1.
+
+---
+
+# Jaeger — Distributed Tracing
+
+This section documents installing **Jaeger**, a distributed tracing system that collects
+traces from all services and visualizes request flows across your microservices.
+
+> **This is also a cluster-level tool.**  
+> Installed once per cluster by hand. The Helm chart lives in `jaegertracing` repo.
+
+---
+
+## What is Jaeger?
+
+Jaeger collects **traces** — records of how a request flows through your services.
+
+```
+User request
+    ↓  (gRPC to API Gateway)
+API Gateway traces → span 1 (handles routing)
+    ↓  (calls Auth Service)
+Auth Service traces → span 2 (validates token)
+    ↓  (returns result)
+API Gateway spans 3, 4, ... (response handling)
+    ↓
+Jaeger UI: "This request took 245ms total
+           — Auth Service took 50ms
+           — Product Service took 120ms
+           — Database call took 45ms"
+```
+
+**Why it matters:** Find which service is slow, see exact call sequences, debug distributed failures.
+
+---
+
+## Prerequisites
+
+- `helm` installed locally
+- `kubectl` connected to EKS cluster
+- EKS cluster running (1+ node)
+- All services already have OpenTelemetry SDK configured
+  (see each service's `config/` for `JAEGER_ENDPOINT` env var)
+
+---
+
+## Installation
+
+### Step 1 — Add the Jaeger Helm repo
+
+```bash
+helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
+helm repo update
+```
+
+### Step 2 — Install Jaeger all-in-one
+
+```bash
+helm install jaeger jaegertracing/jaeger \
+  --namespace tracing \
+  --create-namespace \
+  --set allInOne.enabled=true \
+  --set provisionDataStore.cassandra=false \
+  --set storage.type=memory \
+  --wait --timeout 5m
+```
+
+**What this installs:**
+- `allInOne.enabled=true` — Single pod with Jaeger agent, collector, query UI combined
+- `storage.type=memory` — Traces stored in pod RAM (ephemeral, reset on pod restart)
+- `cassandra=false` — Don't create a Cassandra DB (for test/dev, lighter weight)
+
+**Why memory storage for now?**
+- Sufficient for dev/testing up to ~100K traces before memory pressure
+- No database setup needed (fast iteration)
+- For production, change to `storage.type: elasticsearch` and provision ES cluster
+
+### Step 3 — Verify Jaeger is running
+
+```bash
+kubectl get pods -n tracing
+# Expected:
+# jaeger-<hash>   1/1   Running
+
+# Check the service is up
+kubectl get svc -n tracing
+# jaeger        ClusterIP   10.x.x.x    <none>   16686/TCP,6831/UDP,6832/UDP,14268/TCP
+```
+
+### Step 4 — Access the Jaeger UI
+
+```bash
+# Port-forward to the Jaeger query UI (port 16686)
+kubectl port-forward svc/jaeger 16686:16686 -n tracing
+```
+
+Then open `http://localhost:16686` in your browser.
+
+You should see a dropdown of services on the left side. Initially it will be empty
+until your services send traces.
+
+---
+
+## Wiring services to Jaeger
+
+All 4 services (auth-service, product-service, user-service, api-gateway) are already
+configured in their Go code to use OpenTelemetry. The Helm chart values determine
+**where** traces go.
+
+### What's already set
+
+Each service's `charts/<service>/values.yaml` has:
+
+```yaml
+env:
+  jaegerEndpoint: "jaeger-all-in-one.tracing.svc.cluster.local:4317"
+```
+
+This tells the service's OpenTelemetry SDK to send traces to the Jaeger collector
+running in the `tracing` namespace at port 4317 (gRPC OTLP).
+
+### Deploy a service and watch traces appear
+
+```bash
+# If you haven't deployed services yet:
+helm install auth-service charts/auth-service \
+  --namespace prod \
+  --create-namespace \
+  -f charts/auth-service/values.yaml
+
+# Send a request to generate traces
+kubectl port-forward svc/api-gateway 8000:8000 -n prod
+# In another terminal:
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin"}'
+
+# Open Jaeger UI
+kubectl port-forward svc/jaeger 16686:16686 -n tracing
+# → http://localhost:16686
+# Select service from dropdown (e.g., "api-gateway")
+# Traces should appear within a few seconds
+```
+
+---
+
+## Jaeger Configuration
+
+### Using Elasticsearch for persistence (optional)
+
+For production, store traces in Elasticsearch instead of RAM:
+
+```bash
+# First, install Elasticsearch (or use Amazon OpenSearch)
+helm install elasticsearch elastic/elasticsearch \
+  --namespace tracing \
+  --set replicas=1 \
+  --set minimumMasterNodes=1
+
+# Then, upgrade Jaeger to use it
+helm upgrade jaeger jaegertracing/jaeger \
+  --namespace tracing \
+  --reuse-values \
+  --set storage.type=elasticsearch \
+  --set storage.elasticsearch.host=elasticsearch \
+  --set storage.elasticsearch.port=9200 \
+  --set storage.elasticsearch.scheme=http
+```
+
+### Memory limits (important for in-memory storage)
+
+If using `storage.type=memory`, monitor Jaeger memory:
+
+```bash
+kubectl top pod -n tracing
+# NAME                MEMORY
+# jaeger-<hash>       256Mi (check if approaching limit)
+
+# If needed, increase:
+helm upgrade jaeger jaegertracing/jaeger \
+  --namespace tracing \
+  --reuse-values \
+  --set allInOne.resources.limits.memory=1Gi
+```
+
+### Sampling (reduce trace volume)
+
+By default, Jaeger samples 1 out of every 100 traces. Adjust in values:
+
+```bash
+helm upgrade jaeger jaegertracing/jaeger \
+  --namespace tracing \
+  --reuse-values \
+  --set allInOne.samplingConfig='{"default_strategy":{"type":"const","param":1}}'
+# type: "const", param: 1 = sample 100% (for dev)
+# type: "probabilistic", param: 0.1 = sample 10%
+```
+
+---
+
+## Viewing traces
+
+### Common queries in Jaeger UI
+
+1. **Find slow requests:**
+   - Select service → Click "Trace duration" duration filter
+   - Set min/max: e.g., `>500ms`
+
+2. **Find errors:**
+   - Select service → Filter by tags: `error=true`
+
+3. **Compare two traces:**
+   - Click on one trace, then Ctrl+Click another
+   - View side-by-side comparison
+
+4. **Follow a user's requests:**
+   - Click a trace tag → filter by `user_id=123`
+
+---
+
+## Uninstalling Jaeger
+
+```bash
+# Remove the Jaeger release
+helm uninstall jaeger -n tracing
+
+# Remove namespace and all data
+kubectl delete namespace tracing
+```
+
+---
+
+## Uninstallation (Full Monitoring Stack)
+
+```bash
+# Remove both Jaeger and kube-prometheus-stack
+helm uninstall jaeger -n tracing
 helm uninstall monitoring -n monitoring
 
-# Remove the namespace (deletes all PVCs and stored data too)
-kubectl delete namespace monitoring
+# Remove the namespaces
+kubectl delete namespace tracing monitoring
 ```
 
 > No AWS cost impact — unlike ingress-nginx, kube-prometheus-stack does **not** create

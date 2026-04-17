@@ -57,10 +57,10 @@ readinessProbe:
   periodSeconds: 10
 
 autoscaling:
-  enabled: false
+  enabled: true
   minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
 
 volumes: []
 volumeMounts: []
@@ -69,7 +69,14 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+secrets:
+  mongoUri: "mongodb://localhost:27017"
+  redisAddr: "go-microservices-elasticache-mlep6v.serverless.euc1.cache.amazonaws.com:6379"
+  redisTls: "false"
+  jwtSecret: "your-secret-jwt-key-change-me-in-production"
+  rabbitmqUri: "amqp://guest:guest@rabbitmq:5672/"
+
 env:
   port: "50051"
   mongoDb: "gomicrodb"
-  jaegerEndpoint: "jaeger:4317"
+  jaegerEndpoint: "jaeger-all-in-one.tracing.svc.cluster.local:4317"
