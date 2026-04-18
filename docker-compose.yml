@@ -8,11 +8,13 @@ services:
     restart: always
     ports:
       - "8082:8082"
+      - "2115:2112"  # Prometheus metrics
     env_file:
       - ./order_service/.env
     depends_on:
       - rabbitmq
       - product-service
+      - jaeger
     networks:
       - microservices
 
@@ -123,10 +125,13 @@ services:
       dockerfile: ./email_service/Dockerfile
     container_name: go-micro-email-service
     restart: always
+    ports:
+      - "2116:2112"  # Prometheus metrics
     env_file:
       - ./email_service/.env
     depends_on:
       - rabbitmq
+      - jaeger
     networks:
       - microservices
 
@@ -179,6 +184,9 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./prometheus/rules:/etc/prometheus/rules
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
     networks:
       - microservices
 

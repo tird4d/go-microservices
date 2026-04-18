@@ -3,10 +3,14 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/tird4d/go-microservices/email_service/metrics"
+	"github.com/tird4d/go-microservices/email_service/tracing"
 )
 
 type UserRegisteredEvent struct {
@@ -55,6 +59,29 @@ func bindFanout(conn *amqp.Connection, exchange string) (<-chan amqp.Delivery, e
 func main() {
 	_ = godotenv.Load()
 
+	// Metrics
+	metrics.InitMetrics()
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		log.Println("✅ Metrics server running on :2112")
+		if err := http.ListenAndServe(":2112", nil); err != nil {
+			log.Fatalf("❌ Metrics server error: %v", err)
+		}
+	}()
+
+	// Tracing
+	jaegerEndpoint := os.Getenv("JAEGER_ENDPOINT")
+	if jaegerEndpoint == "" {
+		jaegerEndpoint = "jaeger:4317"
+	}
+	tp, err := tracing.InitTracer("email-service", jaegerEndpoint)
+	if err != nil {
+		log.Printf("⚠️ Failed to init tracer: %v", err)
+	} else {
+		defer tracing.Shutdown(tp)
+		log.Printf("✅ Tracing initialized → %s", jaegerEndpoint)
+	}
+
 	rabbitMQAddr := os.Getenv("RABBITMQ_CONNECTION_STRING")
 	if rabbitMQAddr == "" {
 		rabbitMQAddr = "amqp://guest:guest@localhost:5672/"
@@ -88,6 +115,7 @@ func main() {
 				continue
 			}
 			log.Printf("📨 Welcome email → %s <%s>", event.Name, event.Email)
+			metrics.EmailsSentCounter.WithLabelValues("welcome").Inc()
 		}
 	}()
 
@@ -99,5 +127,6 @@ func main() {
 		}
 		log.Printf("📦 Order confirmation → %s | order=%s | total=€%.2f (%d item(s))",
 			event.UserEmail, event.OrderID, event.TotalPrice, len(event.Items))
+		metrics.EmailsSentCounter.WithLabelValues("order_confirmation").Inc()
 	}
 }

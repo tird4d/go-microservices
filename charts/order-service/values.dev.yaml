@@ -1,0 +1,70 @@
+replicaCount: 1
+
+image:
+  repository: order-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 8082
+
+ingress:
+  enabled: false
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8082
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8082
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+volumes: []
+volumeMounts: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+secrets:
+  mongoUri: "mongodb://mongo-release-mongodb.default.svc.cluster.local:27017"
+  rabbitmqUrl: "amqp://guest:guest@rabbitmq.default.svc.cluster.local:5672/"
+
+env:
+  mongoDb: "orders_db"
+  productServiceAddr: "product-service.default.svc.cluster.local:50053"
+  jaegerEndpoint: "jaeger.default.svc.cluster.local:4317"
+  port: "8082"

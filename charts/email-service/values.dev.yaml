@@ -1,0 +1,46 @@
+replicaCount: 1
+
+image:
+  repository: email-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+
+resources: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+volumes: []
+volumeMounts: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+secrets:
+  rabbitmqConnectionString: "amqp://guest:guest@rabbitmq.default.svc.cluster.local:5672/"
+
+env:
+  jaegerEndpoint: "jaeger.default.svc.cluster.local:4317"

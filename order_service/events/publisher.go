@@ -9,11 +9,11 @@ import (
 )
 
 type OrderPlacedEvent struct {
-	OrderID    string            `json:"order_id"`
-	UserID     string            `json:"user_id"`
-	UserEmail  string            `json:"user_email"`
+	OrderID    string             `json:"order_id"`
+	UserID     string             `json:"user_id"`
+	UserEmail  string             `json:"user_email"`
 	Items      []models.OrderItem `json:"items"`
-	TotalPrice float64           `json:"total_price"`
+	TotalPrice float64            `json:"total_price"`
 }
 
 type OrderPublisher struct {

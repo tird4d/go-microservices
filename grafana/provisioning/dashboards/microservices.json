@@ -1,6 +1,6 @@
 {
   "title": "Go Microservices - 4 Golden Signals",
-  "uid": "go-microservices-golden",
+  "uid": "go-microservices-golden-v2",
   "timezone": "browser",
   "refresh": "10s",
   "time": { "from": "now-15m", "to": "now" },
@@ -32,6 +32,16 @@
           "expr": "rate(user_service_requests_total[1m])",
           "legendFormat": "user — {{endpoint}}",
           "refId": "C"
+        },
+        {
+          "expr": "rate(order_service_requests_total[1m])",
+          "legendFormat": "order — {{endpoint}}",
+          "refId": "D"
+        },
+        {
+          "expr": "rate(email_service_emails_total[1m])",
+          "legendFormat": "email — {{type}}",
+          "refId": "E"
         }
       ]
     },
@@ -85,6 +95,16 @@
           "expr": "histogram_quantile(0.50, rate(user_service_request_duration_seconds_bucket[1m]))",
           "legendFormat": "user p50",
           "refId": "F"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(order_service_request_duration_seconds_bucket[1m]))",
+          "legendFormat": "order p99",
+          "refId": "G"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(order_service_request_duration_seconds_bucket[1m]))",
+          "legendFormat": "order p50",
+          "refId": "H"
         }
       ]
     },
@@ -113,6 +133,16 @@
           "expr": "sum(user_service_requests_total)",
           "legendFormat": "user total",
           "refId": "C"
+        },
+        {
+          "expr": "sum(order_service_requests_total)",
+          "legendFormat": "order total",
+          "refId": "D"
+        },
+        {
+          "expr": "sum(email_service_emails_total)",
+          "legendFormat": "email total",
+          "refId": "E"
         }
       ]
     },
@@ -141,6 +171,11 @@
           "expr": "rate(user_service_request_duration_seconds_sum[5m]) / rate(user_service_request_duration_seconds_count[5m])",
           "legendFormat": "user avg",
           "refId": "C"
+        },
+        {
+          "expr": "rate(order_service_request_duration_seconds_sum[5m]) / rate(order_service_request_duration_seconds_count[5m])",
+          "legendFormat": "order avg",
+          "refId": "D"
         }
       ]
     },
@@ -171,6 +206,16 @@
           "expr": "go_goroutines{job=\"user-service\"}",
           "legendFormat": "user goroutines",
           "refId": "C"
+        },
+        {
+          "expr": "go_goroutines{job=\"order-service\"}",
+          "legendFormat": "order goroutines",
+          "refId": "D"
+        },
+        {
+          "expr": "go_goroutines{job=\"email-service\"}",
+          "legendFormat": "email goroutines",
+          "refId": "E"
         }
       ]
     }

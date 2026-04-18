@@ -2,20 +2,47 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/tird4d/go-microservices/order_service/clients"
 	"github.com/tird4d/go-microservices/order_service/consumer"
 	"github.com/tird4d/go-microservices/order_service/events"
 	"github.com/tird4d/go-microservices/order_service/handlers"
+	"github.com/tird4d/go-microservices/order_service/metrics"
 	"github.com/tird4d/go-microservices/order_service/storage"
+	"github.com/tird4d/go-microservices/order_service/tracing"
 )
 
 func main() {
 	_ = godotenv.Load()
+
+	// Metrics
+	metrics.InitMetrics()
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		log.Println("✅ Metrics server running on :2112")
+		if err := http.ListenAndServe(":2112", nil); err != nil {
+			log.Fatalf("❌ Metrics server error: %v", err)
+		}
+	}()
+
+	// Tracing
+	jaegerEndpoint := os.Getenv("JAEGER_ENDPOINT")
+	if jaegerEndpoint == "" {
+		jaegerEndpoint = "jaeger:4317"
+	}
+	tp, err := tracing.InitTracer("order-service", jaegerEndpoint)
+	if err != nil {
+		log.Printf("⚠️ Failed to init tracer: %v", err)
+	} else {
+		defer tracing.Shutdown(tp)
+		log.Printf("✅ Tracing initialized → %s", jaegerEndpoint)
+	}
 
 	// MongoDB
 	storage.InitMongo()

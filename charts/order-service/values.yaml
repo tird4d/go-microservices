@@ -1,0 +1,85 @@
+replicaCount: 1
+
+image:
+  repository: 114851843413.dkr.ecr.eu-central-1.amazonaws.com/go-microservice/order-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 8082
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: order-service.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8082
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8082
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+volumes: []
+volumeMounts: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+secrets:
+  mongoUri: "mongodb://localhost:27017"
+  rabbitmqUrl: "amqp://guest:guest@rabbitmq.prod.svc.cluster.local:5672/"
+
+env:
+  mongoDb: "orders_db"
+  productServiceAddr: "product-service.prod.svc.cluster.local:50053"
+  jaegerEndpoint: "jaeger.tracing.svc.cluster.local:4317"
+  port: "8082"

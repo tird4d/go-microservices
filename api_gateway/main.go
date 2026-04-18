@@ -35,7 +35,6 @@ func main() {
 		jaegerEndpoint = "jaeger:4317" // Default for docker-compose
 	}
 
-
 	tp, err := tracing.InitTracer("api-gateway", jaegerEndpoint)
 	if err != nil {
 		logger.Log.Errorw("❌ Failed to initialize tracer", "error", err)
@@ -47,7 +46,6 @@ func main() {
 		}
 	}()
 	logger.Log.Infow("✅ Tracing initialized", "endpoint", jaegerEndpoint)
-
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -70,14 +68,12 @@ func main() {
 
 	authClient := authpb.NewAuthServiceClient(authConn)
 
-
 	productConn, err := grpc.DialContext(ctx, os.Getenv("PRODUCT_SERVICE_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(interceptors.UnaryClientInterceptor))
 	if err != nil {
 		log.Fatalf("❌ could not connect to auth gRPC server: %v", err)
 	}
 
-		productClient := productpb.NewProductServiceClient(productConn)
-
+	productClient := productpb.NewProductServiceClient(productConn)
 
 	// ایجاد روت‌ها
 	router := gin.Default()
@@ -102,8 +98,6 @@ func main() {
 	}
 
 	orderHandler := handlers.NewOrderGatewayHandler()
-
-
 
 	router.GET("/healthz", func(c *gin.Context) {
 		c.JSON(200, gin.H{

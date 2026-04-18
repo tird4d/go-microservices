@@ -1,0 +1,71 @@
+# bitnami/rabbitmq override values
+# Chart version: 16.x  |  App version: 4.1.x
+#
+# Deploy with:
+#   helm upgrade --install rabbitmq bitnami/rabbitmq \
+#     --namespace prod \
+#     --create-namespace \
+#     -f infra/rabbitmq/values.yaml \
+#     --set auth.password=<strong-password> \
+#     --set auth.erlangCookie=<random-64-char-string> \
+#     --atomic --timeout 5m
+#
+# NEVER put real credentials here — pass them via --set or CI/CD secrets.
+
+# ── Replica count ───────────────────────────────────────────────────────────
+# Single node for now. Increase to 3 for clustering (odd number required).
+replicaCount: 1
+
+# ── Auth ────────────────────────────────────────────────────────────────────
+# username is safe to keep here; password and erlangCookie are injected at
+# deploy time via --set (CI/CD pipeline secrets: RABBITMQ_PASSWORD, RABBITMQ_ERLANG_COOKIE)
+auth:
+  username: admin
+  password: ""
+  erlangCookie: ""
+
+# ── Persistence ─────────────────────────────────────────────────────────────
+# Messages survive pod restarts and node recycling.
+# EKS default StorageClass provisions an EBS gp3 volume automatically.
+persistence:
+  enabled: true
+  storageClass: ""    # uses cluster default (gp3 on EKS)
+  size: 8Gi
+
+# ── Resources ───────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+# ── Service ─────────────────────────────────────────────────────────────────
+# ClusterIP — only reachable from within the cluster.
+# Other services connect via: rabbitmq.prod.svc.cluster.local:5672
+service:
+  type: ClusterIP
+
+# ── Prometheus metrics ───────────────────────────────────────────────────────
+# Enables the built-in RabbitMQ Prometheus exporter on port 9419.
+# ServiceMonitor wires it into kube-prometheus-stack automatically.
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring       # must match kube-prometheus-stack namespace
+    interval: 30s
+    labels:
+      release: monitoring       # must match kube-prometheus-stack selector label
+
+# ── Pod Disruption Budget ───────────────────────────────────────────────────
+# Ensures at least one RabbitMQ pod stays up during node drains / rolling updates.
+pdb:
+  create: true
+  minAvailable: 1
+
+# ── Clustering ──────────────────────────────────────────────────────────────
+# Disabled for single-node. Enable and set replicaCount: 3 to form a cluster.
+clustering:
+  enabled: false

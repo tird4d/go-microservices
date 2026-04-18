@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "email-service.fullname" . }}
+  name: {{ include "order-service.fullname" . }}
   labels:
-    {{- include "email-service.labels" . | nindent 4 }}
+    {{- include "order-service.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "email-service.selectorLabels" . | nindent 6 }}
+      {{- include "order-service.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "email-service.labels" . | nindent 8 }}
+        {{- include "order-service.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -27,7 +27,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "email-service.serviceAccountName" . }}
+      serviceAccountName: {{ include "order-service.serviceAccountName" . }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -41,27 +41,32 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
             - name: metrics
               containerPort: 2112
               protocol: TCP
           envFrom:
             - secretRef:
-                name: {{ include "email-service.fullname" . }}-secrets
+                name: {{ include "order-service.fullname" . }}-secrets
           env:
+            - name: PORT
+              value: {{ .Values.env.port | quote }}
+            - name: MONGO_DB
+              value: {{ .Values.env.mongoDb | quote }}
+            - name: PRODUCT_SERVICE_ADDR
+              value: {{ .Values.env.productServiceAddr | quote }}
             - name: JAEGER_ENDPOINT
               value: {{ .Values.env.jaegerEndpoint | quote }}
+          {{- with .Values.livenessProbe }}
           livenessProbe:
-            tcpSocket:
-              port: 2112
-            initialDelaySeconds: 10
-            periodSeconds: 30
-            failureThreshold: 3
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
           readinessProbe:
-            tcpSocket:
-              port: 2112
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            failureThreshold: 3
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
