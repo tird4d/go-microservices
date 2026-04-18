@@ -7,7 +7,11 @@ import {
   RefreshTokenRequest,
   UpdateUserRequest,
   GetUsersResponse,
-  ApiError
+  ApiError,
+  Product,
+  CreateProductRequest,
+  Order,
+  CreateOrderRequest,
 } from '../types';
 
 // Create axios instance with base configuration
@@ -104,7 +108,39 @@ export const apiService = {
 
   async deleteUser(userId: string): Promise<void> {
     await api.delete(`/admin/users/${userId}`);
-  }
+  },
+
+  // Product methods (public)
+  async listProducts(): Promise<Product[]> {
+    const response: AxiosResponse<{ products: Product[] }> = await api.get('/products');
+    return response.data.products ?? [];
+  },
+
+  async getProduct(id: string): Promise<Product> {
+    const response: AxiosResponse<Product> = await api.get(`/products/${id}`);
+    return response.data;
+  },
+
+  // Admin product methods
+  async createProduct(data: CreateProductRequest): Promise<Product> {
+    const response: AxiosResponse<Product> = await api.post('/admin/products', data);
+    return response.data;
+  },
+
+  async deleteProduct(id: string): Promise<void> {
+    await api.delete(`/admin/products/${id}`);
+  },
+
+  // Order methods (authenticated)
+  async createOrder(data: CreateOrderRequest): Promise<Order> {
+    const response: AxiosResponse<Order> = await api.post('/orders', data);
+    return response.data;
+  },
+
+  async listOrders(): Promise<Order[]> {
+    const response: AxiosResponse<Order[]> = await api.get('/orders');
+    return response.data ?? [];
+  },
 };
 
 // Legacy services for backward compatibility

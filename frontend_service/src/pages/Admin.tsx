@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { adminService, handleApiError } from '../services/api';
-import { User, UpdateUserRequest } from '../types';
+import { adminService, apiService, handleApiError } from '../services/api';
+import { User, UpdateUserRequest, Product, CreateProductRequest } from '../types';
 import { Navigate } from 'react-router-dom';
 
 interface UserStats {
@@ -13,6 +13,9 @@ interface UserStats {
 
 const Admin: React.FC = () => {
   const { user: currentUser, isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState<'users' | 'products'>('users');
+
+  // --- Users state ---
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,6 +26,60 @@ const Admin: React.FC = () => {
   const [filterRole, setFilterRole] = useState<string>('all');
   const [userStats, setUserStats] = useState<UserStats>({ total: 0, admins: 0, users: 0, recentlyCreated: 0 });
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0 });
+
+  // --- Products state ---
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productLoading, setProductLoading] = useState(false);
+  const [productError, setProductError] = useState('');
+  const [productSuccess, setProductSuccess] = useState('');
+  const [newProduct, setNewProduct] = useState<CreateProductRequest>({
+    name: '', description: '', price: 0, category: '', stock: 0, image_url: '',
+  });
+
+  const fetchProducts = useCallback(async () => {
+    setProductLoading(true);
+    setProductError('');
+    try {
+      const list = await apiService.listProducts();
+      setProducts(list);
+    } catch (err) {
+      setProductError(handleApiError(err).message);
+    } finally {
+      setProductLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'products') fetchProducts();
+  }, [activeTab, fetchProducts]);
+
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProductError('');
+    setProductSuccess('');
+    try {
+      const created = await apiService.createProduct(newProduct);
+      setProducts(prev => [created, ...prev]);
+      setNewProduct({ name: '', description: '', price: 0, category: '', stock: 0, image_url: '' });
+      setProductSuccess('Product created successfully');
+      setTimeout(() => setProductSuccess(''), 3000);
+    } catch (err) {
+      setProductError(handleApiError(err).message);
+    }
+  };
+
+  const handleDeleteProduct = async (id: string, name: string) => {
+    if (!window.confirm(`Delete product "${name}"?`)) return;
+    setProductError('');
+    try {
+      await apiService.deleteProduct(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+      setProductSuccess(`Product "${name}" deleted`);
+      setTimeout(() => setProductSuccess(''), 3000);
+    } catch (err) {
+      setProductError(handleApiError(err).message);
+    }
+  };
 
   const calculateStats = useCallback(() => {
     const total = users.length;
@@ -191,15 +248,31 @@ const Admin: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Panel - User Management</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Manage users, roles, and permissions across the system
-        </p>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+        <p className="mt-1 text-sm text-gray-600">Manage users, products, and system settings</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mb-8">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'users' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            👥 User Management
+          </button>
+          <button
+            onClick={() => setActiveTab('products')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'products' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            📦 Product Management
+          </button>
+        </nav>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {activeTab === 'users' && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -271,10 +344,10 @@ const Admin: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
-      {/* Main Content */}
-      <div className="bg-white shadow rounded-lg">
+      {/* Main Content - Users */}
+      {activeTab === 'users' && <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           {/* Controls */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -548,7 +621,173 @@ const Admin: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+      </div>}
+
+      {/* Products Tab */}
+      {activeTab === 'products' && (
+        <div className="space-y-8">
+          {/* Create Product Form */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Add New Product</h2>
+
+              {productError && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                  <span className="mr-2">❌</span>{productError}
+                </div>
+              )}
+              {productSuccess && (
+                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                  <span className="mr-2">✅</span>{productSuccess}
+                </div>
+              )}
+
+              <form onSubmit={handleCreateProduct} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProduct.name}
+                    onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Product name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProduct.category}
+                    onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g. Electronics"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    value={newProduct.price || ''}
+                    onChange={e => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0 })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newProduct.stock || ''}
+                    onChange={e => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) || 0 })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    rows={2}
+                    value={newProduct.description}
+                    onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Product description"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                  <input
+                    type="url"
+                    value={newProduct.image_url}
+                    onChange={e => setNewProduct({ ...newProduct, image_url: e.target.value })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="sm:col-span-2 flex justify-end">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm font-medium"
+                  >
+                    ➕ Create Product
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Product List */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium text-gray-900">Products ({products.length})</h2>
+                <button
+                  onClick={fetchProducts}
+                  disabled={productLoading}
+                  className="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  {productLoading ? 'Loading...' : '🔄 Refresh'}
+                </button>
+              </div>
+
+              {productLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : products.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No products yet. Create one above!</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {products.map(p => (
+                        <tr key={p.id}>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center">
+                              {p.image_url && (
+                                <img src={p.image_url} alt={p.name} className="w-10 h-10 object-cover rounded mr-3" />
+                              )}
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{p.name}</div>
+                                <div className="text-xs text-gray-500 max-w-xs truncate">{p.description}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-700">{p.category}</td>
+                          <td className="px-4 py-4 text-sm text-gray-900">${p.price.toFixed(2)}</td>
+                          <td className="px-4 py-4 text-sm text-gray-700">{p.stock}</td>
+                          <td className="px-4 py-4">
+                            <button
+                              onClick={() => handleDeleteProduct(p.id, p.name)}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            >
+                              🗑 Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

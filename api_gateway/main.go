@@ -101,6 +101,8 @@ func main() {
 		ProductClient: productClient,
 	}
 
+	orderHandler := handlers.NewOrderGatewayHandler()
+
 
 
 	router.GET("/healthz", func(c *gin.Context) {
@@ -118,6 +120,14 @@ func main() {
 	auth.Use(middlewares.JWTAuthMiddleware(authClient))
 	auth.GET("/me", userHandler.MeHandler)
 	auth.POST("/logout", authHandler.LogoutHandler)
+	auth.POST("/orders", orderHandler.CreateOrder)
+	auth.GET("/orders", orderHandler.ListOrders)
+
+	// Public product routes (browsing — no auth required)
+	public := router.Group("/api/v1")
+	public.GET("/products", adminProductHandler.ListProductsHandler)
+	public.GET("/products/:id", adminProductHandler.GetProductHandler)
+	public.GET("/products/category/:category", adminProductHandler.GetProductsByCategoryHandler)
 
 	admin := router.Group("/api/v1/admin")
 	admin.Use(middlewares.JWTAuthMiddleware(authClient))

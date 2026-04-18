@@ -31,11 +31,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <Link
+                to="/products"
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Store
+              </Link>
               {isAuthenticated ? (
                 <>
                   <span className="text-gray-700">
                     Welcome, {user?.username}
                   </span>
+                  <Link
+                    to="/orders"
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    My Orders
+                  </Link>
                   <Link
                     to="/dashboard"
                     className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"

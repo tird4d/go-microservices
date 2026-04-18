@@ -58,6 +58,48 @@ export interface ApiError {
   details?: string;
 }
 
+// Product types
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  stock: number;
+  image_url: string;
+}
+
+export interface CreateProductRequest {
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  stock: number;
+  image_url: string;
+}
+
+// Order types
+export interface OrderItem {
+  product_id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export interface Order {
+  id: string;
+  user_id: string;
+  user_email: string;
+  items: OrderItem[];
+  total_price: number;
+  status: string;
+  created_at: string;
+}
+
+export interface CreateOrderRequest {
+  items: { product_id: string; quantity: number }[];
+}
+
 // Auth context types
 export interface AuthContextType {
   user: User | null;

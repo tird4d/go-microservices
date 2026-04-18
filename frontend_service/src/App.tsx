@@ -9,6 +9,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import Products from './pages/Products';
+import Orders from './pages/Orders';
 import './index.css';
 
 const App: React.FC = () => {
@@ -20,6 +22,15 @@ const App: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/products" element={<Products />} />
+            <Route
+              path="/orders"
+              element={
+                <PrivateRoute>
+                  <Orders />
+                </PrivateRoute>
+              }
+            />
             <Route
               path="/dashboard"
               element={

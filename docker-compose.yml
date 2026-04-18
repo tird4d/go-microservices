@@ -1,5 +1,21 @@
 services:
 
+  order-service:
+    build:
+      context: .
+      dockerfile: ./order_service/Dockerfile
+    container_name: go-micro-order-service
+    restart: always
+    ports:
+      - "8082:8082"
+    env_file:
+      - ./order_service/.env
+    depends_on:
+      - rabbitmq
+      - product-service
+    networks:
+      - microservices
+
   frontend-service:
     build:
       context: ./frontend_service
@@ -77,8 +93,7 @@ services:
     env_file:
       - ./product_service/.env
     depends_on:
-      - mongo
-      - redis
+      - rabbitmq
     networks:
       - microservices
 
@@ -99,6 +114,19 @@ services:
     restart: always
     ports:
       - "6379:6379"
+    networks:
+      - microservices
+
+  email-service:
+    build:
+      context: .
+      dockerfile: ./email_service/Dockerfile
+    container_name: go-micro-email-service
+    restart: always
+    env_file:
+      - ./email_service/.env
+    depends_on:
+      - rabbitmq
     networks:
       - microservices
 
