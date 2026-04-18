@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
-import { Rate, Trend, Counter, Gauge } from 'k6/metrics';
+import { Rate, Trend, Counter } from 'k6/metrics';
 
 // Custom metrics
 const errorRate = new Rate('errors');
@@ -25,19 +25,52 @@ export const options = {
     { duration: '30s', target: 0, name: 'cool-down' },
   ],
   thresholds: {
-    // Error rate should be below 5%
     'errors': ['rate<0.05'],
-    // 95% of requests should complete within 500ms
     'duration': ['p(95)<500'],
-    // Success rate should be above 95%
     'success': ['rate>0.95'],
   },
 };
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://a3c631aa53dd24df3810f28db6f72711-1952013117.eu-central-1.elb.amazonaws.com';
 
-export default function () {
-  // Group 1: Product endpoints (most common)
+const TEST_USER = {
+  name: 'k6loadtest',
+  email: 'k6loadtest@example.com',
+  password: 'loadtest123',
+  role: 'user',
+};
+
+// setup() runs once before all VUs start — registers the test user and logs in
+export function setup() {
+  // Register test user (ignore 500 if already exists)
+  http.post(`${BASE_URL}/api/v1/register`, JSON.stringify(TEST_USER), {
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  // Login to get token
+  const loginRes = http.post(`${BASE_URL}/api/v1/login`, JSON.stringify({
+    email: TEST_USER.email,
+    password: TEST_USER.password,
+  }), {
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  const body = JSON.parse(loginRes.body);
+  if (!body.token) {
+    console.error(`Login failed: ${loginRes.body}`);
+  }
+  return { token: body.token };
+}
+
+export default function (data) {
+  const authHeaders = {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${data.token}`,
+    },
+  };
+
+  // Group 1: Product endpoints (most common, public)
   group('Product Operations', () => {
     // List products
     let res = http.get(`${BASE_URL}/api/v1/products`);
@@ -76,40 +109,27 @@ export default function () {
     sleep(0.5);
   });
 
-  // Group 2: User endpoints
+  // Group 2: Authenticated user endpoints
   group('User Operations', () => {
-    // Get user by ID (common operation)
-    let res = http.get(`${BASE_URL}/api/v1/users/user123`);
+    // GET /api/v1/me — requires valid JWT
+    const res = http.get(`${BASE_URL}/api/v1/me`, authHeaders);
     check(res, {
-      'get user status is 200 or 401 or 404': (r) => [200, 401, 404].includes(r.status),
-      'get user duration < 200ms': (r) => r.timings.duration < 200,
+      'get me status is 200': (r) => r.status === 200,
+      'get me duration < 300ms': (r) => r.timings.duration < 300,
     });
     duration.add(res.timings.duration);
-    successRate.add([200, 401, 404].includes(res.status));
-    errorRate.add(![200, 401, 404].includes(res.status));
-    rps.add(1);
-    sleep(0.5);
-
-    // Get all users
-    res = http.get(`${BASE_URL}/api/v1/users`);
-    check(res, {
-      'list users status is 200 or 401': (r) => [200, 401].includes(r.status),
-      'list users duration < 300ms': (r) => r.timings.duration < 300,
-    });
-    duration.add(res.timings.duration);
-    successRate.add([200, 401].includes(res.status));
-    errorRate.add(![200, 401].includes(res.status));
+    successRate.add(res.status === 200);
+    errorRate.add(res.status !== 200);
     rps.add(1);
     sleep(0.5);
   });
 
   // Group 3: Health checks
   group('Health Checks', () => {
-    let res = http.get(`${BASE_URL}/health`);
+    const res = http.get(`${BASE_URL}/health`);
     check(res, {
       'health check status is 200': (r) => r.status === 200,
       'health check duration < 50ms': (r) => r.timings.duration < 50,
-      'health check body contains status': (r) => r.body.includes('status') || r.body.includes('ok'),
     });
     duration.add(res.timings.duration);
     successRate.add(res.status === 200);

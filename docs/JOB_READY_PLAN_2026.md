@@ -134,16 +134,18 @@
 - [x] Deploy Jaeger to EKS (`jaegertracing/all-in-one`, namespace: `tracing`), wire `JAEGER_ENDPOINT` in all service charts, verify traces in Jaeger UI
 
 #### Week 3-4: Domain, TLS & Autoscaling (40h)
-- [ ] Register domain (e.g., go-microservices.dev - ~€10/year)
-- [ ] Configure Route53 DNS
-- [ ] Install cert-manager in K8s
-- [ ] Configure Let's Encrypt for TLS
-- [ ] Update Ingress with TLS config
-- [ ] Test HTTPS access
+- [x] Use existing domain on Cloudflare (no new domain needed)
+- [x] Add CNAME record: `microservice.amajgroup.com` → ELB hostname (Cloudflare proxied 🟠)
+- [x] Update Ingress `host:` to the Cloudflare subdomain
+- [x] Verify HTTPS works (Cloudflare handles TLS — no cert-manager needed) ✅ Admin login confirmed working
+- [ ] ~~Register domain (e.g., go-microservices.dev - ~€10/year)~~ → using Cloudflare subdomain instead
+- [ ] ~~Configure Route53 DNS~~ → Cloudflare DNS
+- [ ] ~~Install cert-manager in K8s~~ → Cloudflare provides free TLS automatically
+- [ ] ~~Configure Let's Encrypt for TLS~~ → not needed with Cloudflare proxy
 - [x] Enable IRSA (IAM Roles for Service Accounts) on the cluster
-- [ ] Install **Cluster Autoscaler** (node-level scaling — scales EC2 nodes when pods are Pending)
+- [x] Install **Cluster Autoscaler** (node-level scaling — scales EC2 nodes when pods are Pending) ✅ DONE (April 17, 2026)
 - [x] Add **Horizontal Pod Autoscaler (HPA)** (pod-level scaling — scales replicas based on CPU/memory)
-- [ ] Load test and verify both autoscalers trigger correctly
+- [x] Load test and verify both autoscalers trigger correctly ✅ DONE (HPA: 1→8 replicas, CA: 2→3 nodes, verified with k6)
 - [ ] Document production setup
 
 > **Note:** Cluster Autoscaler + HPA work as a pair. HPA adds pods when load increases; Cluster Autoscaler adds nodes when no node has capacity to schedule those pods. Without Cluster Autoscaler, pods just sit Pending forever (learned this the hard way in Month 3).
@@ -162,7 +164,7 @@
 - [ ] Create generic seed data (demo companies, users)
 - [ ] Simplify to core features:
   - [ ] Multi-tenant candidate management
-  - [ ] Document workflow automation
+  - [ ] Document workflow automation  cd infra/vpc && terraform destroy
   - [ ] RBAC demonstration
   - [ ] Dynamic page generation showcase
 - [ ] Update README with architecture explanation
@@ -230,7 +232,7 @@
 
 #### Target certifications (high ROI for Senior Backend Engineer in Germany)
 
-**Priority 1 — CKA (Certified Kubernetes Administrator)** — ~€395, 2h exam
+**Priority 1 — CKA (Certified Kubernetes Administrator)** 
 - [ ] Study: Kubernetes in Action book (already in reading list)
 - [ ] Practice: killer.sh CKA simulator (2 free attempts with exam purchase)
 - [ ] Key topics: RBAC, network policies, etcd backup, pod scheduling, upgrades
