@@ -6,15 +6,26 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/tird4d/go-microservices/order_service/clients"
 	"github.com/tird4d/go-microservices/order_service/events"
 	"github.com/tird4d/go-microservices/order_service/models"
-	"github.com/tird4d/go-microservices/order_service/storage"
+	productpb "github.com/tird4d/go-microservices/product_service/proto"
 )
 
+// ProductGetter abstracts the gRPC product client for testing.
+type ProductGetter interface {
+	GetProduct(id string) (*productpb.Product, error)
+}
+
+// OrderStore abstracts the storage layer for testing.
+type OrderStore interface {
+	SaveOrder(order models.Order) error
+	GetOrdersByUser(userID string) ([]models.Order, error)
+}
+
 type OrderHandler struct {
-	ProductClient *clients.ProductClient
+	ProductClient ProductGetter
 	Publisher     *events.OrderPublisher
+	Store         OrderStore
 }
 
 type CreateOrderRequest struct {
@@ -71,7 +82,7 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 		CreatedAt:  time.Now(),
 	}
 
-	if err := storage.SaveOrder(order); err != nil {
+	if err := h.Store.SaveOrder(order); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save order"})
 		return
 	}
@@ -90,7 +101,7 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 		return
 	}
 
-	orders, err := storage.GetOrdersByUser(userID)
+	orders, err := h.Store.GetOrdersByUser(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch orders"})
 		return

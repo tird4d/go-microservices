@@ -14,9 +14,22 @@ import (
 	"github.com/tird4d/go-microservices/order_service/events"
 	"github.com/tird4d/go-microservices/order_service/handlers"
 	"github.com/tird4d/go-microservices/order_service/metrics"
+	"github.com/tird4d/go-microservices/order_service/middlewares"
+	"github.com/tird4d/go-microservices/order_service/models"
 	"github.com/tird4d/go-microservices/order_service/storage"
 	"github.com/tird4d/go-microservices/order_service/tracing"
 )
+
+// mongoOrderStore adapts the storage package functions to the handlers.OrderStore interface.
+type mongoOrderStore struct{}
+
+func (m *mongoOrderStore) SaveOrder(order models.Order) error {
+	return storage.SaveOrder(order)
+}
+
+func (m *mongoOrderStore) GetOrdersByUser(userID string) ([]models.Order, error) {
+	return storage.GetOrdersByUser(userID)
+}
 
 func main() {
 	_ = godotenv.Load()
@@ -93,11 +106,17 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.Use(middlewares.MetricsMiddleware())
 
 	orderHandler := &handlers.OrderHandler{
 		ProductClient: productClient,
 		Publisher:     publisher,
+		Store:         &mongoOrderStore{},
 	}
+
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
 
 	v1 := r.Group("/api/v1")
 	{

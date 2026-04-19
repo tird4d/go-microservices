@@ -56,13 +56,41 @@ func bindFanout(conn *amqp.Connection, exchange string) (<-chan amqp.Delivery, e
 	return ch.Consume(q.Name, "", true, true, false, false, nil)
 }
 
+func healthHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"ok"}`))
+}
+
+func processUserEvent(body []byte) error {
+	var event UserRegisteredEvent
+	if err := json.Unmarshal(body, &event); err != nil {
+		return err
+	}
+	log.Printf("📨 Welcome email → %s <%s>", event.Name, event.Email)
+	metrics.EmailsSentCounter.WithLabelValues("welcome").Inc()
+	return nil
+}
+
+func processOrderEvent(body []byte) error {
+	var event OrderPlacedEvent
+	if err := json.Unmarshal(body, &event); err != nil {
+		return err
+	}
+	log.Printf("📦 Order confirmation → %s | order=%s | total=€%.2f (%d item(s))",
+		event.UserEmail, event.OrderID, event.TotalPrice, len(event.Items))
+	metrics.EmailsSentCounter.WithLabelValues("order_confirmation").Inc()
+	return nil
+}
+
 func main() {
 	_ = godotenv.Load()
 
-	// Metrics
+	// Metrics + health
 	metrics.InitMetrics()
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
+		http.HandleFunc("/health", healthHandler)
 		log.Println("✅ Metrics server running on :2112")
 		if err := http.ListenAndServe(":2112", nil); err != nil {
 			log.Fatalf("❌ Metrics server error: %v", err)
@@ -109,24 +137,15 @@ func main() {
 
 	go func() {
 		for msg := range userMsgs {
-			var event UserRegisteredEvent
-			if err := json.Unmarshal(msg.Body, &event); err != nil {
+			if err := processUserEvent(msg.Body); err != nil {
 				log.Println("⚠️ Failed to parse user event:", err)
-				continue
 			}
-			log.Printf("📨 Welcome email → %s <%s>", event.Name, event.Email)
-			metrics.EmailsSentCounter.WithLabelValues("welcome").Inc()
 		}
 	}()
 
 	for msg := range orderMsgs {
-		var event OrderPlacedEvent
-		if err := json.Unmarshal(msg.Body, &event); err != nil {
+		if err := processOrderEvent(msg.Body); err != nil {
 			log.Println("⚠️ Failed to parse order event:", err)
-			continue
 		}
-		log.Printf("📦 Order confirmation → %s | order=%s | total=€%.2f (%d item(s))",
-			event.UserEmail, event.OrderID, event.TotalPrice, len(event.Items))
-		metrics.EmailsSentCounter.WithLabelValues("order_confirmation").Inc()
 	}
 }
